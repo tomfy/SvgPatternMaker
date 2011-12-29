@@ -69,6 +69,13 @@ sub add_line{
   #  $self->show_lines_and_options();
 }
 
+sub add_text{
+ my $self = shift;
+  my $text_string = shift;	# string 
+  my $position = shift;
+  $self->{'clues'}->{$position} = $text_string; #overrides any existing text at same position.
+}
+
 sub show_lines_and_options{
   my $self = shift;
   my %endpts_lineoptions = %{$self->{'lines'}};
@@ -110,6 +117,15 @@ sub svg_string{
     $svg_string .= "\"";
     $svg_string .= "\n" . 'id="' . $endpts . "\"/>\n";
   }
+
+  my %position_clue = %{$self->{clues}};
+  my $text_svg_string = '';
+  foreach my $clue_position (keys %position_clue) {
+    my $clue_text = $position_clue{$clue_position};
+    my @position_array = split(',', $clue_position);
+    $text_svg_string .= $self->text_svg($clue_text, \@position_array);
+  }
+  $svg_string .= $text_svg_string;
   return $svg_string;
 }
 
