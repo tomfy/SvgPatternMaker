@@ -30,7 +30,7 @@ sub scalar_mult_V{
 }
 
 
-# returns ref to array with difference of input vectors
+# returns ref to array with sum of input vectors
 sub add_V{
 	my $v1 = shift; # 1st vector (array ref)
 		my $v2 = shift; # 2nd vector (array ref)
@@ -41,6 +41,7 @@ sub add_V{
 			}
 			return \@result;
 		}else{
+		  die "In add_V, vector sizes are different.\n";
 			return;
 		}
 }
@@ -58,6 +59,7 @@ sub subtract_V{
 			}
 			return \@result;
 		}else{
+	die "In subtract_V, vector sizes are different.\n";
 			return;
 		}
 }
