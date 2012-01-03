@@ -89,7 +89,15 @@ $LLobj->add_line('4,-1,4,0');
   $LLobj->add_line('0,2,3,2', {'stroke-width' => $thick_line_width});
   $LLobj->add_line('3,0,3,2', {'stroke-width' => $thick_line_width});
 
+$LLobj->add_arrow('0.5,2.5,0.5,2');
 $LLobj->add_arrow('1.5,2.5,1.5,2');
+$LLobj->add_arrow('2.5,2.5,2.5,2');
+
+$LLobj->add_arrow('-0.5,-0.5,0.0,0');
+$LLobj->add_arrow('0.5,-0.5,1.0,0');
+$LLobj->add_arrow('2.5,-0.5,2.0,0');
+$LLobj->add_arrow('3.5,-0.5,3.0,0');
+
 
   return $LLobj;
 }
