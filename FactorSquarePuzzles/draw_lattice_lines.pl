@@ -89,6 +89,8 @@ $LLobj->add_line('4,-1,4,0');
   $LLobj->add_line('0,2,3,2', {'stroke-width' => $thick_line_width});
   $LLobj->add_line('3,0,3,2', {'stroke-width' => $thick_line_width});
 
+$LLobj->add_arrow('1.5,2.5,1.5,2');
+
   return $LLobj;
 }
 
