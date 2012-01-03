@@ -73,18 +73,22 @@ sub add_line{		    # adds a line and updates the min and max
   my ($ax, $ay) = $self->_to_euclidean($a1, $a2);
   my ($bx, $by) = $self->_to_euclidean($b1, $b2);
 
-  $self->{min_x} = (defined $self->{min_x})? 
-    min($ax, $bx, $self->{min_x}) : min($ax, $bx);
-  $self->{min_y} = (defined $self->{min_y})? min($ay, $by, $self->{min_y}) : min($ay, $by);
-  $self->{max_x} = (defined $self->{max_x})? 
-    max($ax, $bx, $self->{max_x}) : max($ax, $bx);
-  $self->{max_y} = (defined $self->{max_y})? 
-    max($ay, $by, $self->{max_y}) : max($ay, $by);
+  $self->update_x_y_bounds($ax, $ay);
+  $self->update_x_y_bounds($bx, $by);
+}
+
+sub update_x_y_bounds{
+my $self = shift;
+my ($x, $y) = @_;
+  $self->{min_x} = (defined $self->{min_x})? min($x, $self->{min_x}) : $x;
+  $self->{min_y} = (defined $self->{min_y})? min($y, $self->{min_y}) : $y;
+  $self->{max_x} = (defined $self->{max_x})? max($x, $self->{max_x}) : $x;
+  $self->{max_y} = (defined $self->{max_y})? max($y, $self->{max_y}) : $y;
 }
 
 sub add_clue_text{
   my $self = shift;
-  my $text_string = shift;	# string 
+  my $text_string = shift;	# string
   my $position = shift;
   $self->{'clues'}->{$position} = $text_string; #overrides any existing text at same position.
 }
@@ -107,32 +111,16 @@ sub add_arrow{
   foreach (keys %$new_line_option_hashref) {
     $line_option_hash{$_} = $new_line_option_hashref->{$_};
   }
-  my ($h, $t) = (0.4, 0.2);
+  my ($h, $t) = (0.5, 0.2);
   my ($a1, $a2, $b1, $b2) = split(",", $endpoints);
   #print "$a1, $a2, $b1, $b2\n";
   my ($aa1, $aa2, $bb1, $bb2) = ($a1*(1-$h) + $b1*$h, $a2*(1-$h) + $b2*$h,
 				 $a1*$t + $b1*(1-$t), $a2*$t + $b2*(1-$t));
-  #print "$aa1, $aa2, $bb1, $bb2\n";
-  #print "A:$endpoints \n";
+
   $endpoints = "$aa1,$aa2,$bb1,$bb2";
-  #print "B:$endpoints \n";
-  #exit;
+
   $self->{'arrows'}->{$endpoints} = \%line_option_hash; #overrides any existing line with same endpoints.
-  #  my ($a1, $a2, $b1, $b2) = split(",", $endpoints);
-  #  my ($ax, $ay) = $self->_to_euclidean($a1, $a2);
-  #  my ($bx, $by) = $self->_to_euclidean($b1, $b2);
-
-  #  $self->{min_x} = (defined $self->{min_x})? 
-  #    min($ax, $bx, $self->{min_x}) : min($ax, $bx);
-  # $self->{min_y} = (defined $self->{min_y})? min($ay, $by, $self->{min_y}) : min($ay, $by);
-  #  $self->{max_x} = (defined $self->{max_x})? 
-  #    max($ax, $bx, $self->{max_x}) : max($ax, $bx);
-  # $self->{max_y} = (defined $self->{max_y})? 
-  #   max($ay, $by, $self->{max_y}) : max($ay, $by);
 }
-
-
-
 
 sub min_max_x_y{
   my $self = shift;
@@ -262,8 +250,6 @@ sub answers_svg{
   return $text_svg_string;
 }
 
-
-
 sub svg_string{
   my $self = shift;
   my $svg_string = $self->lines_svg();
@@ -285,14 +271,12 @@ sub point_position{
   my $point = shift;		# array ref
   my ($c1, $c2) = @{$point};
   my $basis = $self->{basis};
-  #  my $offset = $self->{offset};
 
   my $b_x = $basis->[0]->[0] * $c1 + $basis->[1]->[0] * $c2; # + $offset->[0];
   my $b_y = $basis->[0]->[1] * $c1 + $basis->[1]->[1] * $c2; # + $offset->[1];
- 
-  # ($b_x, $b_y) = @{add_V([$b_x, $b_y], $self->{'offset'})};
+
   my $min_xy = [$self->{min_x}, $self->{min_y}];
-  ($b_x, $b_y) = @{subtract_V([$b_x, $b_y], $min_xy)}; #[$self->{min_x}, $self->{min_y}])};
+  ($b_x, $b_y) = @{subtract_V([$b_x, $b_y], $min_xy)};
   ($b_x, $b_y) = @{add_V([$b_x, $b_y], $self->{'offset'})}; 
   return [$b_x, $b_y];
 }
@@ -305,7 +289,6 @@ sub text_svg{	# print the text (1st arg) at the position (2nd arg).
   my $font_size = shift || $self->{'font-size'};
   my $text_anchor = shift || $self->{'text-anchor'};
   my ($x, $y) = @{$self->point_position($point)};
-  # <text x="250" y="150"  font-family="Verdana" font-size="55" fill="blue" > Hello, out there </text>
 
   my $svg_text_string = '<text x="' . $x . '" y="' . $y . '" ';
   $svg_text_string .= ' font-size="' . $font_size . '" style="text-anchor:' . $text_anchor . '" > ' . $text . "</text>\n";
@@ -319,8 +302,7 @@ sub arrows_svg{
   my $basis = $self->{'basis'};
   my $offset = $self->{'offset'};
 
-  # my ($min_x, $min_y, $max_x, $max_y) = $self->min_max_x_y();
-  $min_xy = [$self->{min_x}, $self->{min_y}];
+ # $min_xy = [$self->{min_x}, $self->{min_y}];
   foreach my $endpts (keys %endpt_lineoptions) {
     my ($a1, $a2, $b1, $b2) = split(",", $endpts);
 
