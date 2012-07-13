@@ -3,7 +3,7 @@ use strict;
 #use Math;
 use FactorSquare;
 
-my $size = shift || 10;
+my $size = shift || 3;
 my $box_width = shift || 5;
 my $primestr = shift || '1,2,3,2,5,3,1,2,7';
 $primestr =~ s/'//g;
