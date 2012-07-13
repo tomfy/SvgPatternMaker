@@ -344,7 +344,7 @@ sub text_svg {             # print the text (1st arg) at the position (2nd arg).
     my $scale = shift;
     my $font_size   = int($scale * $self->{'font-size'});
    
-    print STDERR "font size: $font_size , scale: $scale \n";
+#   print STDERR "font size: $font_size , scale: $scale \n";
     my $text_anchor = shift || $self->{'text-anchor'};
     my $p           = $self->point_position( $point, $offset, $scale );
 
