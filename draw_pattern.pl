@@ -16,7 +16,7 @@ use Getopt::Std;
 # -c <ncols> number of cols
 # -s <scale> scale (20-100 typical)
 # -a <angle> angle param used in def of unit cell (for some patterns)
-# angle is pi times this param.
+# actual angle is pi times this parameter.
 use vars qw($opt_p $opt_r $opt_c $opt_s $opt_a);
 
 # get options
