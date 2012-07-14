@@ -1,26 +1,31 @@
 #!/usr/bin/perl -w
 use strict;
+use List::Util qw ' min max sum ';
 use Math::Trig;
 use LatticeLines;
 use Getopt::Std;
 
-use vars qw($opt_p $opt_s $opt_w $opt_a);
+use vars qw($opt_p $opt_s $opt_w $opt_a $opt_o $opt_r $opt_c);
 
 # -p <puzzle pattern. Options are  2x3 (default), 3x3, 2x4, triangle,
 # -s <scale. e.g. 50>
 # -w <what to show? clues, answers, both. (default is clues)>
 # -a <show arrows? 0/1, default: 0>
+# -o <orientation p: portrait l: landscape. default: p>
+# -r <number of rows. Default: 1>
+# -c <number of columns. Default: 1>
 # typical usage: perl bootstrap_ortholog.pl -i $align_filename -T ML -k -n 1 -N 100 -S 12345 -r mindl -m 0.015 -q castorbean > outfile
 
 # get options
-getopts("p:s:w:a:");
+getopts("p:s:w:a:o:r:c:");
 
 # defaults:
 my $type  = $opt_p || '2x3';
 my $scale = $opt_s || 54;
-
-my $what_to_show = $opt_w
-  || 'clues';    # by default show the clues but not the answers. 'answers' 'both' are other possibilities.
+my $orientation = $opt_o || 'p'; # default is portrait
+my $n_rows = $opt_r || 1;
+my $n_cols = $opt_c || 1;
+my $what_to_show = $opt_w || 'clues'; # by default show the clues but not the answers.
 my $show_clues   = 1;
 my $show_answers = 0;
 my $show_arrows  = ( uc $opt_a eq 'N' ) ? 0 : 1;
@@ -38,19 +43,44 @@ if ( $what_to_show eq 'answers' ) {
 }
 
 # now put together the svg string:
-my ( $width, $height ) = ( 765, 990 );    # letter size
+my ( $width, $height ) = ($orientation eq 'l')? ( 990, 765 ): ( 765, 990 );    # letter size
 my $svg_string =
 '<?xml version="1.0" standalone="no"?> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'
   . "\n";
 $svg_string .=
   '<svg width="' . $width . '" height="' . $height . '" version="1.1" xmlns="http://www.w3.org/2000/svg">' . "\n";
 
-my $n_rows = 1;
-my $n_cols = 1;
+    $svg_string .= multi_puzzles($type, $width, $height, $n_rows, $n_cols);
+
+# end of svg:
+$svg_string .= '</svg>';
+
+print $svg_string;
+
+# end of main.
+
+sub multi_puzzles{
+    my $type = shift || '2x3';
+    my $printing_area_width = shift;
+    my $printing_area_height = shift;
+    my $n_rows = shift;
+    my $n_cols = shift;
+
+    my $gap_size = 0.15*min($printing_area_width, $printing_area_height);
+    my $max_puzzle_width = ( $printing_area_width - $n_cols * $gap_size ) / $n_cols;
+  my $max_puzzle_height = ( $printing_area_height - $n_rows * $gap_size ) / $n_rows;
+
+
+    my $svg_string = '';
+ #  $svg_string .= "<line \n" . "x1=\"0\" y1=\"0\" " . 
+ #      "x2=\"$printing_area_width\" y2=\"$printing_area_height\" " . 
+ #      "style=\"stroke:rgb(255,0,0);stroke-width:2\"/> \n";
+
+
 for my $row ( 0 .. $n_rows - 1 ) {
     for my $col ( 0 .. $n_cols - 1 ) {
-        my $x_off = 1.0 + $col * 6.64;
-        my $y_off = 0.895 + $row * 5.84;
+        my $x_off = 0.5*$gap_size + $col * ($max_puzzle_width + $gap_size);
+        my $y_off = 0.5*$gap_size + $row * ($max_puzzle_height + $gap_size);
         my $puzzle_obj;
         if ( $type eq '2x3' ) {
             $puzzle_obj = rectangle2x3_puzzle('1,2,3,5,7,11');
@@ -61,14 +91,18 @@ for my $row ( 0 .. $n_rows - 1 ) {
         } elsif ( $type eq '3x3' ) {
             $puzzle_obj = square3x3_puzzle('2,3,5,1,2,3,5');
         } elsif ( $type eq '6x6' ) {
-            $puzzle_obj = square6x6_puzzle('1,2,3,5,7,11,1,2,3,5,1,2,3,5,7,11,13');
+            $puzzle_obj = square6x6_puzzle('1,2,3,5,7,11, 1,2,3,5, 1,2,3,5,7,11,13');
         } else {
             $puzzle_obj = triangle9_puzzle();
         }
-
+	my ($min_x, $min_y, $max_x, $max_y) = $puzzle_obj->min_max_x_y();
+	my ($w, $h) = ($max_x - $min_x, $max_y - $min_y);
+	my $scale = min($max_puzzle_width/$w, $max_puzzle_height/$h);
         # svg body:
+#	print "w, h, scale : $w, $h, $scale, max puzzle width, height: $max_puzzle_width, $max_puzzle_height.\n";
         $svg_string .= $puzzle_obj->svg_string(
-                                                [ $scale * $x_off, $scale * ( $y_off + 5 ) ],
+                                                [ $x_off + 0.5*($max_puzzle_width - $scale*$w), 
+						  $y_off + 0.5*($max_puzzle_height - $scale*$h) ],
                                                 $scale,
                                                 {
                                                    show_clues   => $show_clues,
@@ -79,13 +113,9 @@ for my $row ( 0 .. $n_rows - 1 ) {
 
     }
 }
-
-# end of svg:
-$svg_string .= '</svg>' . "\n";
-
-print $svg_string, "\n";
-
-# end of main.
+    return $svg_string;
+} # end of multi_puzzles
+    
 
 sub rectangle2x3_puzzle {
 
@@ -866,7 +896,7 @@ sub randomize_numbers {    # take the argument (string of numbers)
     # and get an array of numbers in randomized order
     my $numbers_string = shift || '1,2,3,5,7,11';
     my $target_size    = shift;
-    my @numbers        = split( ',', $numbers_string );
+    my @numbers        = split( '\s*,\s*', $numbers_string );
     my $size           = scalar @numbers;
     my @entries        = ();
     foreach ( 0 .. $target_size - 1 ) {
