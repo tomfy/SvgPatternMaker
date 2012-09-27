@@ -1,6 +1,8 @@
 #!/usr/bin/perl -w
 use strict;
 use Math::Trig;
+
+use lib '/home/tomfy/Non-work/SvgPatternMaker';
 use UnitCell;
 use SnubSquare;
 use CairoPentagonal;
@@ -117,10 +119,10 @@ sub svg_output_lines{
 #     y2="946.58704"
 #     style="stroke:#0000ff;stroke-width:0.02834646000000000;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;fill:none"
 
-
+# Letter size: 990 x 765
 # Not sure of the significance of the width and height here - just set to largish value.
 	my $svg_string = '<?xml version="1.0" standalone="no"?> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' . "\n";
-	$svg_string .= '<svg width="2000" height="2000" version="1.1" xmlns="http://www.w3.org/2000/svg">' . "\n";
+	$svg_string .= '<svg width="990" height="765" version="1.1" xmlns="http://www.w3.org/2000/svg">' . "\n";
 
 	foreach my $line_ref (@$lines_ref){
 		my ($x1, $y1) = @{$line_ref->[0]};
