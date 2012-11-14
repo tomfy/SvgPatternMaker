@@ -3,12 +3,14 @@ use strict;
 use Math::Trig;
 
 use lib '/home/tomfy/Non-work/SvgPatternMaker';
-use UnitCell;
+#use UnitCell;
+use Square;
 use SnubSquare;
 use CairoPentagonal;
 use Hex;
 use Triangle;
-use TruncatedSquare;;
+use TruncatedSquare;
+use PenroseRhombs;
 use TLYVector qw(add_V scalar_mult_V rotate_2d_V);
 use Getopt::Std;
 
@@ -18,15 +20,16 @@ use Getopt::Std;
 # -c <ncols> number of cols
 # -s <scale> scale (20-100 typical)
 # -a <angle> angle param used in def of unit cell (for some patterns)
+# -o <portrait landscape square> 
 # actual angle is pi times this parameter.
-use vars qw($opt_p $opt_r $opt_c $opt_s $opt_a);
+use vars qw($opt_p $opt_r $opt_c $opt_s $opt_a $opt_o);
 
 # get options
-getopts("p:r:c:s:a:h");
+getopts("p:r:c:s:a:o:");
 
 if(!defined $opt_p){
 print "Usage: draw_pattern -p <pattern> -r <nrows> -c <ncols> -s <scale> -a <angle_param> \n";
-print " possible patterns: SnubSquare CairoPentagonal Triangle Hex TruncatedSquare \n";
+print " possible patterns: Square SnubSquare CairoPentagonal Triangle Hex TruncatedSquare PenroseRhombs\n";
 print " Pattern must be specified on command line; other parameters have following defaults: \n";
 print " nrows: 10; ncols: nrows; scale 50; angle_param: 1/3. \n";
 print " The actual angle used is pi*angle_param, which is pi/3 by default. \n";
@@ -41,7 +44,7 @@ my $offset_factor = 0.01;
 my $nrows = $opt_r || 10;
 my $ncols = $opt_c || $nrows;
 my $angle = (defined $opt_a)? pi*$opt_a: pi/3; # angle in radians.
-
+my $orientation = $opt_o || 'portrait';
 # print "[$opt_p, $opt_r, $opt_c, $opt_s, $opt_a] \n";
 
 my $stroke_width = 1.2; 
@@ -53,7 +56,9 @@ my $overall_rotation_angle = 0.0; # additional rotation of the entire pattern co
 my ($xoffset, $yoffset) = ($offset_factor*$scale, $offset_factor*$scale); 
 
 my $unit_cell_obj;
-if($opt_p eq 'SnubSquare'){
+if($opt_p eq 'Square'){
+$unit_cell_obj = Square->new($scale, $angle);
+}elsif($opt_p eq 'SnubSquare'){
 $unit_cell_obj = SnubSquare->new($scale, $angle);
 }
 elsif($opt_p eq 'CairoPentagonal'){
@@ -68,12 +73,15 @@ $unit_cell_obj = Triangle->new($scale, $angle);
 elsif($opt_p eq 'TruncatedSquare'){
 $unit_cell_obj = TruncatedSquare->new($scale, $angle);
 }
+ elsif($opt_p eq 'PenroseRhombs'){
+ $unit_cell_obj = PenroseRhombs->new($scale);
+ }
 
 # get the set of lines forming the pattern:
 my $pattern_lines_ref = pattern_from_unit_cell($unit_cell_obj, $nrows, $ncols, $overall_rotation_angle, $xoffset, $yoffset);
 
 # generate the svg code for this set of lines:
-my $svg_output_string = svg_output_lines($pattern_lines_ref, $rgb, $stroke_width);
+my $svg_output_string = svg_output_lines($pattern_lines_ref, $rgb, $stroke_width, $orientation);
 
 my $gnuplot_output_string = gnuplot_output_lines($pattern_lines_ref);
 
@@ -109,6 +117,7 @@ sub svg_output_lines{
 # x and y coordinates.
 	my $rgb = shift || "99,99,99";
 	my $stroke_width = shift || 1;
+	my $orientation = shift || 'portrait';
 
 # example of svg code for line:
 # ponoko requires fill:none, and small stroke-width. Not sure why stroke:#0000ff (i.e. black) here.
@@ -120,9 +129,12 @@ sub svg_output_lines{
 #     style="stroke:#0000ff;stroke-width:0.02834646000000000;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;fill:none"
 
 # Letter size: 990 x 765
-# Not sure of the significance of the width and height here - just set to largish value.
+	my ($width, $height) = ($orientation eq 'portrait')? (765, 990): (990, 765);
+	 if($orientation eq 'square'){ $width = 765; $height = 765; } 
+# apparently 90 pixels = 1 inch, 8 1/2 inches = 720 + 45 = 765, check.
+# Not really sure of the significance of the width and height here - but using values for letter, 90 pixels/inch
 	my $svg_string = '<?xml version="1.0" standalone="no"?> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' . "\n";
-	$svg_string .= '<svg width="990" height="765" version="1.1" xmlns="http://www.w3.org/2000/svg">' . "\n";
+	$svg_string .= '<svg width="' . $width . '" height="' . $height . '" version="1.1" xmlns="http://www.w3.org/2000/svg">' . "\n";
 
 	foreach my $line_ref (@$lines_ref){
 		my ($x1, $y1) = @{$line_ref->[0]};
