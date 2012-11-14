@@ -8,7 +8,7 @@ sub new {
     my $class = shift;
     my $self = bless {}, $class;
 
-    my $long = shift;
+    my $long = shift; # this is the edge length of the rhombs in pixels.
     $long = ( defined $long ) ? $long : 1.0;
     my $angle       = 0.2 * pi;
     my $half_w_thin = $long * sin( 0.5 * $angle );
