@@ -1,0 +1,44 @@
+# basic idea: instead of integers 1-n in an n x n kenken, use
+n distinct prime numbers. Divide into smaller boxes (cages) in 
+usual way, and give products. Should be easier in that the prime factorization
+is unique. 
+
+Possibly relax requirement of same n numbers in each row and col.
+e.g. 2,3,5,7,11 in 4x4, with no prime occuring > 1 time in a row or col, 
+i.e. in this case 4 distinct primes (of these 5) in each row/col.
+
+Could make it interactive - you get to choose cages to request info on, try
+to solve with minimal information used. Drag the mouse over the squares to be included in cage, which
+become highlighted as they are selected; when you release the mouse a menu appears from which you 
+choose the operation.
+
+Generalizing the operations -, /: 
+Subtraction: 
+1)could sort from big to small, then:
+	a) alternate +-, e.g.: if the cage contains 1,5,4,2,2 you would get 5-4+2-2+1 = 2.
+	b) take numbers from the big end of list until their sum is >= sum of remaining numbers; add the big
+    	   end numbers and subtract the rest. e.g. 1,5,4,2,2 -> 5,4,2,2,1 -> 9-5 = 4.
+	c) same idea but starting from small end of sorted list: 1,5,4,2,2 -> 1,2,2,5,4 -> 10-4 = 6.
+2) assign + and - so as to get the smallest non-negative number. 1,5,4,2,2 -> 1+4-5+2-2 = 0.
+3) assign + and - randomly. (If want >= 0 reject negative results and try again). User can do this multiple times
+   for same cage.
+Division: 
+1) Among all possible placements of some of the cage numbers in numerator and the rest in the denominator,
+	take the one with the smallest integer value. e.g. 1,5,4,2,2 => 5*4*1/(2*2) = 5; 
+        1,3,4,6,2 => 6*2/(3*4) = 1; 2,3,5 => 2*3*5 = 30; 4,5,6 => 120.
+2) Give LCM/GCF. 1,5,4,2,2 => 20/1 = 20; 1,3,4,6,2 => 12/1 = 12; 4,6,2 => 12/2 = 6; 2,3,5 => 30/1 = 30; 4,5,6 => 60/1 = 60.
+3) As with subtraction, sort from big to small, alternate numerator, denominator, give integer quotient and remainder. 
+e.g 1,5,4,2,2 => 5*2*1/(4*2) = 5/4 = 1 R 1. Or analogous to subtraction 1b) 1,5,4,2,2 => 5*4/(2*2*1) = 5 R 0; 
+2,3,5 => 15/2 = 7 R 1. Or like 1c) 1,5,4,2,2 => 2*2*4/5 = 3 R 1; 2,3,5 => 6/5 = 1 R 1.
+
+
+Could allow multiple occurences of a number in a row or col. Then need to give more information.
+* give row products, col products, diagonal products, or some subset of these.
+* player could interactively choose which information (e.g. row product for a particular row) to
+  be shown. or could interactively define a cage to be shown the product for.
+
+Have each of the n^2 squares having either 1 or a small prime.  
+specify on CL the number of occurrences of each of 1,2,3,5,7,11, e.g. 1,1,2,2,2,3,3,5,7,
+
+Could replace the 'each number occurs exactly once in each row, col' rule 
+of kenken with knowing the row and col sums - 

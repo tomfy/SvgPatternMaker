@@ -1,0 +1,5 @@
+This repository has perl scripts and modules to generate
+svg code for various geometric patterns, such as square, triangular,
+hexagonal, etc. tilings.
+
+Also for generating factor square puzzles.
