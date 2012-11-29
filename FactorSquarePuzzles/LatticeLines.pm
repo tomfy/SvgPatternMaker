@@ -2,6 +2,7 @@ package LatticeLines;
 
 use Math::Trig;
 use List::Util qw ( min max sum );
+use lib '/home/tomfy/Non-Work/SvgPatternMaker';
 use lib '/home/tomfy/Non-work/SvgPatternMaker';
 use TLYVector qw( add_V subtract_V scalar_mult_V rotate_2d_V );
 
