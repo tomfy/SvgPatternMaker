@@ -85,7 +85,7 @@ sub multi_puzzles{
 
 for my $row ( 0 .. $n_rows - 1 ) {
     for my $col ( 0 .. $n_cols - 1 ) {
-	$show_clues = ! $show_clues;
+#	$show_clues = ! $show_clues;
 # $show_answers = ! $show_answers;
         my $x_off = 0.5*$gap_size + $col * ($max_puzzle_width + $gap_size);
         my $y_off = 0.5*$gap_size + $row * ($max_puzzle_height + $gap_size);
