@@ -71,10 +71,15 @@ sub multi_puzzles{
     my $printing_area_height = shift;
     my $n_rows = shift;
     my $n_cols = shift;
+    my $margin = shift || 50;
+    $printing_area_width -= 2*$margin;
+ $printing_area_height -= 2*$margin;
 
-    my $gap_size = 0.15*min($printing_area_width, $printing_area_height);
-    my $max_puzzle_width = ( $printing_area_width - $n_cols * $gap_size ) / $n_cols;
-  my $max_puzzle_height = ( $printing_area_height - $n_rows * $gap_size ) / $n_rows;
+ #   my $sum_of_gaps = 0.5*min($printing_area_width, $printing_area_height);
+    my $h_gap_size = 0.3*$printing_area_width/$n_cols;
+      my $v_gap_size = 0.3*$printing_area_height/$n_rows;
+    my $max_puzzle_width = ( $printing_area_width - $n_cols * $h_gap_size ) / $n_cols;
+  my $max_puzzle_height = ( $printing_area_height - $n_rows * $v_gap_size ) / $n_rows;
 
 
     my $svg_string = '';
@@ -87,8 +92,8 @@ for my $row ( 0 .. $n_rows - 1 ) {
     for my $col ( 0 .. $n_cols - 1 ) {
 #	$show_clues = ! $show_clues;
 # $show_answers = ! $show_answers;
-        my $x_off = 0.5*$gap_size + $col * ($max_puzzle_width + $gap_size);
-        my $y_off = 0.5*$gap_size + $row * ($max_puzzle_height + $gap_size);
+        my $x_off = 0.5*$h_gap_size + $col * ($max_puzzle_width + $h_gap_size) + $margin;
+        my $y_off = 0.5*$v_gap_size + $row * ($max_puzzle_height + $v_gap_size) + $margin;
         my $puzzle_obj;
         if ( $type eq '2x3' ) {
             $puzzle_obj = rectangle2x3_puzzle('1,2,3,5,7,11');
