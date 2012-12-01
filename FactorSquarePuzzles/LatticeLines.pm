@@ -39,7 +39,6 @@ sub new {
     my $self = bless {}, $class;
 
     my $args_href = shift || undef;
-
     foreach ( keys %defaults ) {
         $self->{$_} = $defaults{$_};    #
     }
@@ -250,8 +249,8 @@ sub lines_svg {                                                   # return svg
         $svg_string .= $self->line_svg( [ $a_x, $a_y ], [ $b_x, $b_y ], $offset, $scale );
 
         my $line_options = $endpt_lineoptions{$endpts};
-	$line_options->{'stroke-width'} *= $scale;
-        $svg_string .= $self->line_options_svg($line_options);
+#	$line_options->{'stroke-width'} *= $scale;
+        $svg_string .= $self->line_options_svg($line_options, $scale);
         $svg_string .= 'id="' . $endpts . "\"/>\n";
     }
     return $svg_string;
@@ -260,9 +259,12 @@ sub lines_svg {                                                   # return svg
 sub line_options_svg {
     my $self         = shift;
     my $line_options = shift;
+    my $scale = shift || 1;
     my $svg_string   = '';
     foreach my $option_name ( keys %$line_options ) {
-        $svg_string .= $option_name . ':' . $line_options->{$option_name} . ';';
+      my $option_value = $line_options->{$option_name};
+      $option_value *= $scale if($option_name eq 'stroke-width'); 
+        $svg_string .= $option_name . ':' . $option_value . ';';
     }
     $svg_string =~ s/;$//;    # remove final ';' if present.
     $svg_string .= "\"\n";
@@ -302,11 +304,11 @@ sub svg_string {
     my $offset           = shift;
     my $scale = shift;
     my $what_to_show_arg = shift || {};
-    my $svg_string       = $self->lines_svg($offset, $scale);
-
-    for ( keys %$what_to_show_arg ) {
+  for ( keys %$what_to_show_arg ) {
         $self->{$_} = $what_to_show_arg->{$_};
     }
+
+    my $svg_string       = $self->lines_svg($offset, $scale);
 
     if ( $self->{show_clues} ) {
         $svg_string .= $self->clues_svg($offset, $scale);
@@ -371,8 +373,8 @@ sub arrows_svg {
 
         $svg_string .= $self->line_svg( [ $a_x, $a_y ], [ $b_x, $b_y ], $offset, $scale );
         my $line_options = $endpt_lineoptions{$endpts};
-	$line_options->{'stroke-width'} *= $scale;
-        $svg_string .= $self->line_options_svg($line_options);
+#	$line_options->{'stroke-width'} *= $scale;
+        $svg_string .= $self->line_options_svg($line_options, $scale);
         $svg_string .= 'id="' . $endpts . "\"/>\n";
 
         my $short_shaft_xy = scalar_mult_V( 0.4, [ $a_x - $b_x, $a_y - $b_y ] );
@@ -380,11 +382,11 @@ sub arrows_svg {
         my @barb2_xy = rotate_2d_V( @$short_shaft_xy, -1 * pi / 5 );
 
         $svg_string .= $self->line_svg( add_V( \@barb1_xy, [ $b_x, $b_y ] ), [ $b_x, $b_y ], $offset, $scale );
-        $svg_string .= $self->line_options_svg($line_options);
+        $svg_string .= $self->line_options_svg($line_options, $scale);
         $svg_string .= 'id="' . $endpts . ";b1\"/>\n";
 
         $svg_string .= $self->line_svg( add_V( \@barb2_xy, [ $b_x, $b_y ] ), [ $b_x, $b_y ], $offset, $scale );
-        $svg_string .= $self->line_options_svg($line_options);
+        $svg_string .= $self->line_options_svg($line_options, $scale);
         $svg_string .= 'id="' . $endpts . ";b2\"/>\n";
     }
     return $svg_string;
