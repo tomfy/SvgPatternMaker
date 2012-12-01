@@ -36,4 +36,10 @@ $pdf_files_to_combine .= " $tmp_pdf_page_file ";
 $page_number++;
 }
 
-system " gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=combinedpdf.pdf -dBATCH  $pdf_files_to_combine "
+my $pdf_file_name = $input_file;
+$pdf_file_name =~ s/[.]svg$//;
+$pdf_file_name .= '.pdf';
+system " gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=$pdf_file_name -dBATCH  $pdf_files_to_combine ";
+
+my @tmp_pdf_files = split(" ", $pdf_files_to_combine);
+unlink @tmp_pdf_files;
