@@ -9,7 +9,7 @@ use vars qw($opt_p $opt_s $opt_w $opt_a $opt_o $opt_r $opt_c $opt_n $opt_f);
 
 # -p <puzzle pattern. Options are  2x3 (default), 3x3, 2x4, 3x4, 3x8, 6x6, triangle,
 # -s <scale. e.g. 50>
-# -w <what to show? clues, answers, both. (default is clues)>
+# -w <what to show? clues, answers, both, neither. (default is clues)>
 # -a <show arrows? 0/1, default: 0>
 # -o <orientation p: portrait l: landscape. default: p>
 # -r <number of rows. Default: 1>
@@ -161,7 +161,7 @@ sub multi_puzzles {
                 $puzzle_obj = rectangle3x4_puzzle();
             }
             elsif ( $type eq '3x8' ) {
-                $puzzle_obj = rectangle3x8_puzzle();
+                $puzzle_obj = rectangle3x8_puzzle('1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7, 11, 13');
             }
             elsif ( $type eq '3x3' ) {
                 $puzzle_obj = square3x3_puzzle('2,3,5,1,2,3,5');
@@ -1156,7 +1156,7 @@ sub randomize_numbers {    # take the argument (string of numbers)
     # and get an array of numbers in randomized order
     my $numbers_string = shift || '1,2,3,5,7,11';
     my $target_size    = shift;
-    my @numbers        = split( '\s*,\s*', $numbers_string );
+    my @numbers        = split( '\s*,\s*', $numbers_string ); # split on commas (optionally with whitespace before and/or after).
     my $size           = scalar @numbers;
     my @entries        = ();
     foreach ( 0 .. $target_size - 1 ) {
