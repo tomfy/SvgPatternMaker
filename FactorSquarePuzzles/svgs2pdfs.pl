@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 use strict;
-#use IPC::Open2;
 use IPC::Filter qw( filter );
 
 my $input_file = shift;
