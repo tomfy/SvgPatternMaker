@@ -7,6 +7,8 @@ use lib '/home/tomfy/Non-Work/SvgPatternMaker/FactorSquarePuzzles';
 use LatticeLines;
 use Getopt::Std;
 
+use constant THICKWIDTH => 0.05;
+
 use vars qw($opt_p $opt_s $opt_w $opt_a $opt_o $opt_r $opt_c $opt_n $opt_f);
 
 # -p <puzzle pattern. Options are  2x3 (default), 2x3b 3x3, 2x4, 3x4, 3x8, 6x6, tri6, tri9, tri10, tri13, tri16
@@ -160,9 +162,11 @@ sub multi_puzzles {
             $puzzle_obj = rectangle3x4_puzzle();
          } elsif ( $type eq '3x8' ) {
             $puzzle_obj = rectangle3x8_puzzle('1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7, 11, 13');
-         } elsif ( $type eq '5x5' ) {
+         } elsif ( $type eq '5x5A' ) {
+            $puzzle_obj = square5x5A_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
+         } elsif ( $type eq '5x5B' ) {
             $puzzle_obj = square5x5B_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
-         } elsif ( $type eq '6x6' ) {
+         }elsif ( $type eq '6x6' ) {
             $puzzle_obj =
               square6x6_puzzle('1,2,3,5,7,11, 1,2,3,5, 1,2,3,5,7,11,13');
          } elsif ( $type eq 'tri6') {
@@ -224,7 +228,7 @@ sub rectangle2x3_puzzle {       # 2 rows, 3 columns
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # 2 * $scale / 100;
-   my $thick_line_width = 0.06; # 6 * $scale / 100;
+   my $thick_line_width = THICKWIDTH; # 0.06; # 6 * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -314,7 +318,7 @@ sub rectangle2x3b_puzzle {      # 3 rows, 2 columns
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # 2 * $scale / 100;
-   my $thick_line_width = 0.06; # 6 * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; # 6 * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -421,7 +425,7 @@ sub rectangle2x4_puzzle {
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # 2 * $scale / 100;
-   my $thick_line_width = 0.06; #  * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; #  * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -529,7 +533,7 @@ sub rectangle3x4_puzzle {
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.06; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -651,7 +655,7 @@ sub rectangle3x8_puzzle {
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.06; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -928,7 +932,7 @@ sub square5x5B_puzzle {
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.06; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $scale = 1;               # 2/(3**0.5);
    my $LLobj            = LatticeLines->new(
@@ -1042,7 +1046,7 @@ sub square6x6_puzzle {
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02;  # * $scale / 100;
-   my $thick_line_width = 0.075; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.075; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -1321,7 +1325,7 @@ sub square3x3_puzzle {
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.06; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -1420,7 +1424,7 @@ sub triangle9_puzzle {
    my $size    = scalar @entries;
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.06; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -1502,7 +1506,7 @@ sub triangle13_puzzle {         # 13 triangles
    my $size    = scalar @entries;
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.05; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.05; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -1538,21 +1542,54 @@ sub triangle13_puzzle {         # 13 triangles
    my $clue_L = $entries[1] * $entries[2] * $entries[6];
 
 
-   $LLobj->add_clue_text( $clue_A, '0.4,4.7' );
-   $LLobj->add_clue_text( $clue_B, '1.6,3.9' );
-   $LLobj->add_clue_text( $clue_C, '3.0,2.5' );
+   # $LLobj->add_clue_text( $clue_A, '0.4,4.7' );
+   # $LLobj->add_clue_text( $clue_B, '1.6,3.9' );
+   # $LLobj->add_clue_text( $clue_C, '3.0,2.5' );
+   # $LLobj->add_clue_text( $clue_D, '3.9,1.4' );
+
+   # $LLobj->add_clue_text( $clue_E, '4.0,0.6' );
+   # $LLobj->add_clue_text( $clue_F, '3.0,0.5' );
+   # $LLobj->add_clue_text( $clue_G, '1.53,0.5' );
+   # $LLobj->add_clue_text( $clue_H, '0.53,0.6' );
+
+   # $LLobj->add_clue_text( $clue_I, '-0.3,1.4' );
+   # $LLobj->add_clue_text( $clue_J, '-0.5,2.5' );
+   # $LLobj->add_clue_text( $clue_K, '-0.5,3.9' );
+   # $LLobj->add_clue_text( $clue_L, '-0.3,4.7' );
+
+  $LLobj->add_clue_text( $clue_A, '0.6,4.6' );
+   $LLobj->add_clue_text( $clue_B, '1.6,3.85' );
+   $LLobj->add_clue_text( $clue_C, '3.15,2.4' );
    $LLobj->add_clue_text( $clue_D, '3.9,1.4' );
 
-   $LLobj->add_clue_text( $clue_E, '4.0,0.6' );
-   $LLobj->add_clue_text( $clue_F, '3.0,0.5' );
-   $LLobj->add_clue_text( $clue_G, '1.53,0.5' );
-   $LLobj->add_clue_text( $clue_H, '0.53,0.6' );
+   $LLobj->add_clue_text( $clue_E, '3.8,0.7' );
+   $LLobj->add_clue_text( $clue_F, '3.1,0.4' );
+   $LLobj->add_clue_text( $clue_G, '1.5,0.4' );
+   $LLobj->add_clue_text( $clue_H, '0.5,0.7' );
 
    $LLobj->add_clue_text( $clue_I, '-0.3,1.4' );
-   $LLobj->add_clue_text( $clue_J, '-0.5,2.5' );
-   $LLobj->add_clue_text( $clue_K, '-0.5,3.9' );
-   $LLobj->add_clue_text( $clue_L, '-0.3,4.7' );
+   $LLobj->add_clue_text( $clue_J, '-0.55,2.4' );
+   $LLobj->add_clue_text( $clue_K, '-0.45,3.85' );
+   $LLobj->add_clue_text( $clue_L, '-0.2,4.6' );
 
+   # add arrows pointing from clues to corresponding rows
+   $LLobj->add_arrow('0.5,5.0,0.5,4.0'); # clue a
+   $LLobj->add_arrow('1.5,4.0,1.5,3.5'); # clue b
+
+   $LLobj->add_arrow('3.0,2.5,2.5,2.5'); # clue c
+   $LLobj->add_arrow('4.0,1.5,3.0,1.5'); # clue d
+
+   $LLobj->add_arrow('4.0,0.5,3.0,1.5'); # clue e
+   $LLobj->add_arrow('3.0,0.5,2.5,1.0'); # clue f
+
+   $LLobj->add_arrow('1.5,0.5,1.5,1.0'); # clue g
+   $LLobj->add_arrow('0.5,0.5,0.5,1.5'); # clue h
+
+   $LLobj->add_arrow('-0.5,1.5,0.5,1.5'); # clue i
+   $LLobj->add_arrow('-0.5,2.5,0.0,2.5'); # clue j
+
+   $LLobj->add_arrow('-0.5,4.0,0.0,3.5'); # clue k
+   $LLobj->add_arrow('-0.5,5.0,0.5,4.0'); # clue l
 
 
    #  $LLobj->add_answer_text( $entries[0], '0.4,4.2' );
@@ -1602,7 +1639,7 @@ sub triangle13_puzzle {         # 13 triangles
    $LLobj->add_line( '3,1,1,1', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '1,1,0,2', { 'stroke-width' => $thick_line_width } );
 
-   my $A = 0.8;
+   my $A = 0.6;
    $LLobj->{min_x} -= $A;
    $LLobj->{max_x} += $A;
    $LLobj->{min_y} -= $A;
@@ -1624,7 +1661,7 @@ sub triangle13b_puzzle {        # 13 triangles
    my $size    = scalar @entries;
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.05; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.05; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -1746,7 +1783,7 @@ sub triangle13b_puzzle {        # 13 triangles
  
 
 
-   my $A = 0.8;
+   my $A = 0.6;
    $LLobj->{min_x} -= $A;
    $LLobj->{max_x} += $A;
    $LLobj->{min_y} -= $A;
@@ -1767,7 +1804,7 @@ sub triangle16_puzzle {
    my $size    = scalar @entries;
 
    my $std_line_width   = 0.02; # * $scale / 100;
-   my $thick_line_width = 0.06; # * $scale / 100;
+   my $thick_line_width = THICKWIDTH; # 0.06; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
                                             {
@@ -1844,23 +1881,23 @@ sub triangle16_puzzle {
 
    # add the lines for a 9-number triangular puzzle
    # to the LatticeLines object:
-   $LLobj->add_line('0,0,0,1');
-   $LLobj->add_line('0,5,0,6');
-   $LLobj->add_line('1,0,1,5');
+   $LLobj->add_line('0,0.5,0,1');
+   $LLobj->add_line('0,5,0,5.5');
+   $LLobj->add_line('1,0.0,1,5');
    $LLobj->add_line('2,1,2,4');
    $LLobj->add_line('3,1,3,3');
 
    $LLobj->add_line('-1,4,1,4');
    $LLobj->add_line('-1,3,2,3');
    $LLobj->add_line('-1,2,4,2');
-   $LLobj->add_line('-1,1,0,1');
-   $LLobj->add_line('4,1,5,1');
+   $LLobj->add_line('-0.5,1,0,1');
+   $LLobj->add_line('4,1,4.5,1');
 
-   $LLobj->add_line('-1,6,0,5');
-   $LLobj->add_line('4,1,5,0');
-   $LLobj->add_line('-1,5,4,0');
-   $LLobj->add_line('0,3,3,0');
-   $LLobj->add_line('0,2,2,0');
+   $LLobj->add_line('-0.5,5.5,0,5');
+   $LLobj->add_line('4,1,4.5,0.5');
+   $LLobj->add_line('-1,5,4.0,0.0');
+   $LLobj->add_line('0,3,3.0,0.0');
+   $LLobj->add_line('0,2,2.0,0.0');
 
    # these are the heavy lines outlining the area with the 9 numbers
    $LLobj->add_line( '0,1,0,5', { 'stroke-width' => $thick_line_width } );
