@@ -101,8 +101,8 @@ sub add_line {               # adds a line and updates the min and max
       \%line_option_hash;    #overrides any existing line with same endpoints.
     my ( $a1, $a2, $b1, $b2 ) = split( ",", $endpoints );
 
-    my ( $ax, $ay ) = $self->_to_euclidean( $a1, $a2 );
-    my ( $bx, $by ) = $self->_to_euclidean( $b1, $b2 );
+    my ( $ax, $ay ) = $self->_to_cartesian( $a1, $a2 );
+    my ( $bx, $by ) = $self->_to_cartesian( $b1, $b2 );
 
     $self->update_x_y_bounds( $ax, $ay );
     $self->update_x_y_bounds( $bx, $by );
@@ -158,7 +158,7 @@ sub add_arrow {
     foreach ( keys %$new_line_option_hashref ) {
         $line_option_hash{$_} = $new_line_option_hashref->{$_};
     }
-    my ( $h, $t ) = ( 0.5, 0.2 );
+    my ( $h, $t ) = ( 0.55, 0.15 );
     my ( $a1, $a2, $b1, $b2 ) = split( ",", $endpoints );
 
     #print "$a1, $a2, $b1, $b2\n";
@@ -177,8 +177,8 @@ sub add_arrow {
 
 sub add_circle {
     my $self   = shift;
-    my $center = shift
-      ; # string e.g. '0,1'; these are coefficients of basis vectors, not (necessarily) euclidean
+    my $center = shift; # string e.g. '0,1';
+    # these are coefficients of basis vectors, not (necessarily) cartesian
     my $radius = shift;
     $self->{'circles'}->{$center} = $radius;    #
 }
@@ -190,8 +190,8 @@ sub min_max_x_y {
       ( 100000, 100000, -100000, -100000 );
     foreach my $endpts_string ( keys %endpts_options_hash ) {
         my ( $a1, $a2, $b1, $b2 ) = split( ",", $endpts_string );
-        my ( $ax, $ay ) = $self->_to_euclidean( $a1, $a2 );
-        my ( $bx, $by ) = $self->_to_euclidean( $b1, $b2 );
+        my ( $ax, $ay ) = $self->_to_cartesian( $a1, $a2 );
+        my ( $bx, $by ) = $self->_to_cartesian( $b1, $b2 );
         if ( $ax < $min_x ) {
             $min_x = $ax;
         }
@@ -219,6 +219,15 @@ sub min_max_x_y {
         }
     }
 
+      while(my ($c,$r) = each %{$self->{'circles'}}){
+         my ( $c1, $c2) = split( ",", $c );
+         my ($cx, $cy) = $self->_to_cartesian( $c1, $c2 );
+         $min_x = min( $min_x, $cx - $r);
+         $max_x = max( $max_x, $cx + $r);
+           $min_y = min( $min_y, $cy - $r);
+         $max_y = max( $max_y, $cy + $r);
+      }
+
     return ( $min_x, $min_y, $max_x, $max_y );
 }
 
@@ -234,9 +243,9 @@ sub show_lines_and_options {
     }
 }
 
-sub _to_euclidean {    # given a position represented as a linear combination
+sub _to_cartesian {    # given a position represented as a linear combination
         # of the basis vectors (the coefficients being given as arguments)
-        # return the corresponding euclidean (x and y) coordinates.
+        # return the corresponding cartesian (x and y) coordinates.
     my $self = shift;
     my ( $a1, $a2 ) = @_;
     my $basis = $self->{'basis'};
@@ -267,8 +276,8 @@ sub lines_svg {    # return svg
     my $min_xy = [ $self->{min_x}, $self->{min_y} ];
     foreach my $endpts ( keys %endpt_lineoptions ) {
         my ( $a1, $a2, $b1, $b2 ) = split( ",", $endpts );
-        my ( $a_x, $a_y ) = $self->_to_euclidean( $a1, $a2 );
-        my ( $b_x, $b_y ) = $self->_to_euclidean( $b1, $b2 );
+        my ( $a_x, $a_y ) = $self->_to_cartesian( $a1, $a2 );
+        my ( $b_x, $b_y ) = $self->_to_cartesian( $b1, $b2 );
         $svg_string .=
           $self->line_svg( [ $a_x, $a_y ], [ $b_x, $b_y ], $offset, $scale );
 
@@ -288,7 +297,7 @@ sub circles_svg {
     my $svg_string = '';
     foreach my $center ( keys %{$self->{'circles'}} ) {
         my $radius = $self->{'circles'}->{$center};
-        my ( $a_x, $a_y ) = $self->_to_euclidean( split( ",", $center ) );
+        my ( $a_x, $a_y ) = $self->_to_cartesian( split( ",", $center ) );
         my $a = [ $a_x, $a_y ];
         $a = subtract_V( $a, [ $self->{min_x}, $self->{min_y} ] );
 
@@ -384,7 +393,7 @@ sub point_position {
     my $offset = shift;    # array ref
     my $scale  = shift;
 
-    my ( $b_x, $b_y ) = $self->_to_euclidean( @{$point} );
+    my ( $b_x, $b_y ) = $self->_to_cartesian( @{$point} );
     my $min_xy = [ $self->{min_x}, $self->{min_y} ];
     my $b = subtract_V( [ $b_x, $b_y ], $min_xy );
 
@@ -430,8 +439,8 @@ sub arrows_svg {
     foreach my $endpts ( keys %endpt_lineoptions ) {
         my ( $a1, $a2, $b1, $b2 ) = split( ",", $endpts );
 
-        my ( $a_x, $a_y ) = $self->_to_euclidean( $a1, $a2 );
-        my ( $b_x, $b_y ) = $self->_to_euclidean( $b1, $b2 );
+        my ( $a_x, $a_y ) = $self->_to_cartesian( $a1, $a2 );
+        my ( $b_x, $b_y ) = $self->_to_cartesian( $b1, $b2 );
 
         $svg_string .=
           $self->line_svg( [ $a_x, $a_y ], [ $b_x, $b_y ], $offset, $scale );
@@ -464,7 +473,7 @@ sub arrows_svg {
     return $svg_string;
 }
 
-sub line_svg {    # takes euclidean endpoints a and b
+sub line_svg {    # takes cartesian endpoints a and b
     my $self   = shift;
     my $a      = shift;
     my $b      = shift;
