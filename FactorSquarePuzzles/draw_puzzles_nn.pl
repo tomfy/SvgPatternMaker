@@ -2,12 +2,14 @@
 use strict;
 use List::Util qw ' min max sum ';
 use Math::Trig;
+
+use lib '/home/tomfy/Non-Work/SvgPatternMaker/FactorSquarePuzzles';
 use LatticeLines;
 use Getopt::Std;
 
 use vars qw($opt_p $opt_s $opt_w $opt_a $opt_o $opt_r $opt_c $opt_n $opt_f);
 
-# -p <puzzle pattern. Options are 4x4, 5x5, 3x3_triangle, 4x4_triangle
+# -p <puzzle pattern. Options are 2x3 (default), 2x4, 3x4, 3x8, 5x5, 6x6, tri6, tri10
 # -s <scale. e.g. 50>
 # -w <what to show? clues, answers, both, neither. (default is clues)>
 # -a <show arrows? 0/1, default: 0>
@@ -1163,7 +1165,7 @@ $LLobj->add_circle('1,2', sqrt(3));
 
 
 
-sub triangle10_puzzle {
+sub triangle10_puzzle { # 10 unknown numbers to be found.
 
     #   my $scale          = shift || 100;
     #   my $offset_x       = shift || 0.5;

@@ -2,6 +2,8 @@
 use strict;
 use List::Util qw ' min max sum ';
 use Math::Trig;
+
+use lib '/home/tomfy/Non-Work/SvgPatternMaker/FactorSquarePuzzles';
 use LatticeLines;
 use Getopt::Std;
 
@@ -171,7 +173,7 @@ sub multi_puzzles {
                   square6x6_puzzle('1,2,3,5,7,11, 1,2,3,5, 1,2,3,5,7,11,13');
             }
             else {
-                $puzzle_obj = triangle9_puzzle();
+                $puzzle_obj = triangle9_puzzle('1,1,2,2,2,3,3,5,7');
             }
             my ( $min_x, $min_y, $max_x, $max_y ) = $puzzle_obj->min_max_x_y();
             my ( $w, $h ) = ( $max_x - $min_x, $max_y - $min_y );
