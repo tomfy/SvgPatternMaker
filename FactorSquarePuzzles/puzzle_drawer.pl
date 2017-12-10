@@ -11,16 +11,18 @@ use constant THICKWIDTH => 0.05;
 
 use vars qw($opt_p $opt_s $opt_w $opt_a $opt_o $opt_r $opt_c $opt_n $opt_f);
 
-# -p <puzzle pattern. Options are  2x3 (default), 2x3b 3x3, 2x4, 3x4, 3x8, 6x6, tri6, tri9, tri10, tri13, tri16
+# -p <puzzle pattern. Options are  2x3 (default), 2x3b, 3x3, 2x4, 3x4, 3x8, 5x5, 6x6,
+#                                  5x5nn, tri6nn, tri10nn,
+#                                  tri9, tri13_3, tri13_4, tri16
 # -s <scale. e.g. 50>
 # -w <what to show? clues, answers, both, neither. (default is clues)>
-# -a <show arrows? 0/1, default: 0>
+# -a <show arrows? 0/1, default: 1> (not implemented - arrows are shown if defined)
 # -o <orientation p: portrait l: landscape. default: p>
 # -r <number of rows. Default: 1>
 # -c <number of columns. Default: 1>
 # -n <number of pages. Default: 1>
 # -f <output filename. Default: print to STDOUT>
-# typical usage: perl bootstrap_ortholog.pl -i $align_filename -T ML -k -n 1 -N 100 -S 12345 -r mindl -m 0.015 -q castorbean > outfile
+# typical usage: puzzle_drawer.pl -p tri9 -r 3 -c 1 > tri9.svg
 
 # get options
 getopts("p:s:w:a:o:r:c:n:f:");
@@ -120,15 +122,18 @@ sub multi_puzzles {
    my $n_cols               = shift;
    my $margin               = shift || 50;
    $printing_area_width  -= 2 * $margin;
+   my $puzzle_area_width = $printing_area_width;
    $printing_area_height -= 2 * $margin;
+   my $writing_area_height = 0.12*$printing_area_height;
+   my $puzzle_area_height = $printing_area_height - $writing_area_height;
 
    #   my $sum_of_gaps = 0.5*min($printing_area_width, $printing_area_height);
-   my $h_gap_size = 0.15 * $printing_area_width / $n_cols;
-   my $v_gap_size = 0.15 * $printing_area_height / $n_rows;
+   my $h_gap_size = 0.15 * $puzzle_area_width / $n_cols;
+   my $v_gap_size = 0.15 * $puzzle_area_height / $n_rows;
    my $max_puzzle_width =
-     ( $printing_area_width - $n_cols * $h_gap_size ) / $n_cols;
+     ( $puzzle_area_width - $n_cols * $h_gap_size ) / $n_cols;
    my $max_puzzle_height =
-     ( $printing_area_height - $n_rows * $v_gap_size ) / $n_rows;
+     ( $puzzle_area_height - $n_rows * $v_gap_size ) / $n_rows;
 
    my ($svg_string, $svg_solutions_string) = ('', '');
 
@@ -145,14 +150,14 @@ sub multi_puzzles {
            0.5 * $h_gap_size +
              $col * ( $max_puzzle_width + $h_gap_size ) +
                $margin;
-         my $y_off =
+         my $y_off = $writing_area_height +
            0.5 * $v_gap_size +
              $row * ( $max_puzzle_height + $v_gap_size ) +
                $margin;
          my $puzzle_obj;
          if ( $type eq '2x3' ) {
             $puzzle_obj = rectangle2x3_puzzle('1,2,3,5,7,11');
-         } elsif ( $type eq '2x3b' ) {
+         } elsif ( $type eq '2x3b'  or  $type eq '2x3B' ) {
             $puzzle_obj = rectangle2x3b_puzzle('1,2,3,5,7,11');
          } elsif ( $type eq '2x4' ) {
             $puzzle_obj = rectangle2x4_puzzle('1,2,3,5,7,11,2,3');
@@ -162,10 +167,10 @@ sub multi_puzzles {
             $puzzle_obj = rectangle3x4_puzzle();
          } elsif ( $type eq '3x8' ) {
             $puzzle_obj = rectangle3x8_puzzle('1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7, 11, 13');
-         } elsif ( $type eq '5x5A' ) {
-            $puzzle_obj = square5x5A_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
-         } elsif ( $type eq '5x5B' ) {
-            $puzzle_obj = square5x5B_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
+         } elsif ( $type eq '5x5' ) {
+            $puzzle_obj = square5x5_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
+         } elsif ( $type eq '5x5nn' ) {
+            $puzzle_obj = square5x5nn_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
          }elsif ( $type eq '6x6' ) {
             $puzzle_obj =
               square6x6_puzzle('1,2,3,5,7,11, 1,2,3,5, 1,2,3,5,7,11,13');
@@ -809,13 +814,13 @@ sub rectangle3x8_puzzle {
    return $LLobj;
 }
 
-sub square5x5A_puzzle {
+sub square5x5_puzzle {
 
    #    my $scale          = shift || 100;
    #  my $offset_x       = shift || 0.5;
    #  my $offset_y       = shift || 0.5;
    my $numbers_string = shift || '1,2,3,5,7,11,2,3,5,7,13,2,3';
-   my $target_size = 13;
+   my $target_size = 25;
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
@@ -834,44 +839,79 @@ sub square5x5A_puzzle {
                                             }
                                            );
 
-   #
-   my $clue_A = $entries[0] * $entries[1] * $entries[3];
-   my $clue_B = $entries[1] * $entries[2] * $entries[4];
+   # top edge column clues:
+   my $clue_A = $entries[0] * $entries[5] * $entries[10];
+   my $clue_B = $entries[1] * $entries[6] * $entries[11];
+   my $clue_C = $entries[2] * $entries[7] * $entries[12];
+   my $clue_D = $entries[3] * $entries[8] * $entries[13];
+   my $clue_E = $entries[4] * $entries[9] * $entries[14];
 
-   my $clue_H = $entries[0] * $entries[3] * $entries[5];
-   my $clue_G = $entries[5] * $entries[8] * $entries[10];
+   # upper right corner diagonal clue:
+   my $clue_UR = $entries[4] * $entries[8] * $entries[12];
 
-   my $clue_F = $entries[10] * $entries[8] * $entries[11];
-   my $clue_E = $entries[11] * $entries[9] * $entries[12];
+   # right edge row clues:
+   my $clue_F = $entries[2] * $entries[3] * $entries[4];
+   my $clue_G = $entries[7] * $entries[8] * $entries[9];
+   my $clue_H = $entries[12] * $entries[13] * $entries[14];
+   my $clue_I = $entries[17] * $entries[18] * $entries[19];
+   my $clue_J = $entries[22] * $entries[23] * $entries[24];
 
-   my $clue_D = $entries[12] * $entries[9] * $entries[7];
-   my $clue_C = $entries[7] * $entries[4] * $entries[2];
+   # lower right corner diagonal clue:
+   my $clue_LR = $entries[12] * $entries[18] * $entries[24];
 
-   my $clue_I = $entries[1] * $entries[4] * $entries[6];
-   my $clue_L = $entries[3] * $entries[5] * $entries[6];
-   my $clue_K = $entries[6] * $entries[8] * $entries[11];
-   my $clue_J = $entries[6] * $entries[7] * $entries[9];
+   # lower edge column clues:
+   my $clue_K = $entries[14] * $entries[19] * $entries[24];
+   my $clue_L = $entries[13] * $entries[18] * $entries[23];
+   my $clue_M = $entries[12] * $entries[17] * $entries[22];
+   my $clue_N = $entries[11] * $entries[16] * $entries[21];
+   my $clue_O = $entries[10] * $entries[15] * $entries[20];
+
+   # lower left corner diagonal clue:
+   my $clue_LL = $entries[12] * $entries[16] * $entries[20];
+
+  # left edge row clues:
+   my $clue_P = $entries[20] * $entries[21] * $entries[22];
+   my $clue_Q = $entries[15] * $entries[16] * $entries[17];
+   my $clue_R = $entries[10] * $entries[11] * $entries[12];
+   my $clue_S = $entries[5] * $entries[6] * $entries[7];
+   my $clue_T = $entries[0] * $entries[1] * $entries[2];
+
+   # upper left corner diagonal clue:
+   my $clue_UL = $entries[0] * $entries[6] * $entries[12];
+
 
    my $dist_from_box = -0.6;
-   $LLobj->add_clue_text( $clue_A, "1.5,4.5" );
-   $LLobj->add_clue_text( $clue_B, "3.5,4.5" );
+   $LLobj->add_clue_text( $clue_A, "0.5,5.4" );
+   $LLobj->add_clue_text( $clue_B, "1.5,5.4" );
+   $LLobj->add_clue_text( $clue_C, "2.5,5.4" );
+   $LLobj->add_clue_text( $clue_D, "3.5,5.4" );
+   $LLobj->add_clue_text( $clue_E, "4.5,5.4" );
 
-   $LLobj->add_clue_text( $clue_C, "4.5,3.5" );
-   $LLobj->add_clue_text( $clue_D, "4.5,1.5" );
+ $LLobj->add_clue_text( $clue_UR, "5.5,5.4" );
 
-   $LLobj->add_clue_text( $clue_E, "3.5,0.5" );
-   $LLobj->add_clue_text( $clue_F, "1.5,0.5" );
+   $LLobj->add_clue_text( $clue_F, "5.5,4.4" );
+   $LLobj->add_clue_text( $clue_G, "5.5,3.4" );
+   $LLobj->add_clue_text( $clue_H, "5.5,2.4" );
+   $LLobj->add_clue_text( $clue_I, "5.5,1.4" );
+   $LLobj->add_clue_text( $clue_J, "5.5,0.4" );
 
-   $LLobj->add_clue_text( $clue_G, "0.5,1.5" );
-   $LLobj->add_clue_text( $clue_H, "0.5,3.5" );
+ $LLobj->add_clue_text( $clue_LR, "5.5,-0.6" );
 
+   $LLobj->add_clue_text( $clue_K, "4.5,-0.6" );
+   $LLobj->add_clue_text( $clue_L, "3.5,-0.6" );
+   $LLobj->add_clue_text( $clue_M, "2.5,-0.6" );
+   $LLobj->add_clue_text( $clue_N, "1.5,-0.6" );
+   $LLobj->add_clue_text( $clue_O, "0.5,-0.6" );
 
-   $LLobj->add_clue_text( $clue_I, "2.5,3.5" );
-   $LLobj->add_clue_text( $clue_J, "3.5,2.5" );
+ $LLobj->add_clue_text( $clue_LL, "-0.5,-0.6" );
 
-   $LLobj->add_clue_text( $clue_K, "2.5,1.5" );
-   $LLobj->add_clue_text( $clue_L, "1.5,2.5" );
+   $LLobj->add_clue_text( $clue_P, "-0.5,0.4" );
+   $LLobj->add_clue_text( $clue_Q, "-0.5,1.4" );
+   $LLobj->add_clue_text( $clue_R, "-0.5,2.4" );
+   $LLobj->add_clue_text( $clue_S, "-0.5,3.4" );
+   $LLobj->add_clue_text( $clue_T, "-0.5,4.4" );
 
+ $LLobj->add_clue_text( $clue_UL, "-0.5,5.4" );
 
    $LLobj->add_answer_text( $entries[0], "0.5,4.5" );
    $LLobj->add_answer_text( $entries[1], "2.5,4.5" );
@@ -895,15 +935,19 @@ sub square5x5A_puzzle {
    # add the lines for a 9-number square puzzle
    # to the LatticeLines object:
 
-   $LLobj->add_line('1,0,1,5'); # verticals
-   $LLobj->add_line('2,0,2,5');
-   $LLobj->add_line('3,0,3,5');
-   $LLobj->add_line('4,0,4,5');
+   $LLobj->add_line('1,-1,1,6'); # verticals
+   $LLobj->add_line('0,-1,0,6');
+   $LLobj->add_line('2,-1,2,6');
+   $LLobj->add_line('3,-1,3,6');
+   $LLobj->add_line('4,-1,4,6');
+   $LLobj->add_line('5,-1,5,6');
 
-   $LLobj->add_line('0,1,5,1'); # horizontals
-   $LLobj->add_line('0,2,5,2');
-   $LLobj->add_line('0,3,5,3');
-   $LLobj->add_line('0,4,5,4');
+   $LLobj->add_line('-1,0,6,0'); # horizontals
+   $LLobj->add_line('-1,1,6,1');
+   $LLobj->add_line('-1,2,6,2');
+   $LLobj->add_line('-1,3,6,3');
+   $LLobj->add_line('-1,4,6,4');
+   $LLobj->add_line('-1,5,6,5');
 
    # these are the heavy lines outlining the area with the 9 numbers
    $LLobj->add_line( '0,0,0,5', { 'stroke-width' => $thick_line_width } );
@@ -912,17 +956,17 @@ sub square5x5A_puzzle {
    $LLobj->add_line( '0,0,5,0', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '0,5,5,5', { 'stroke-width' => $thick_line_width } );
 
-   $LLobj->add_line( '2,3,2,4', { 'stroke-width' => $thick_line_width } );
-   $LLobj->add_line( '3,3,4,3', { 'stroke-width' => $thick_line_width } );
+   # $LLobj->add_line( '2,3,2,4', { 'stroke-width' => $thick_line_width } );
+   # $LLobj->add_line( '3,3,4,3', { 'stroke-width' => $thick_line_width } );
 
-   $LLobj->add_line( '3,1,3,2', { 'stroke-width' => $thick_line_width } );
-   $LLobj->add_line( '1,2,2,2', { 'stroke-width' => $thick_line_width } );
+   # $LLobj->add_line( '3,1,3,2', { 'stroke-width' => $thick_line_width } );
+   # $LLobj->add_line( '1,2,2,2', { 'stroke-width' => $thick_line_width } );
 
    return $LLobj;
 }
 
 
-sub square5x5B_puzzle {
+sub square5x5nn_puzzle {
 
    #    my $scale          = shift || 100;
    #  my $offset_x       = shift || 0.5;

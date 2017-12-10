@@ -405,7 +405,7 @@ sub point_position {
 
 sub text_svg {    # print the text (1st arg) at the position (2nd arg).
 
-    # by default use the objects font-size and text-anchor
+    # by default use the object's font-size and text-anchor
     my $self   = shift;
     my $text   = shift;
     my $point  = shift;    # array ref giving coefficents of basis vectors
