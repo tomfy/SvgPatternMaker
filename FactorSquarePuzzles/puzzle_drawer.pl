@@ -1538,7 +1538,7 @@ sub triangle13_puzzle {         # 13 triangles
    my $clue_L = $entries[1] * $entries[2] * $entries[6];
 
 
-  $LLobj->add_clue_text( $clue_A, '0.4,4.7' );
+   $LLobj->add_clue_text( $clue_A, '0.4,4.7' );
    $LLobj->add_clue_text( $clue_B, '1.6,3.9' );
    $LLobj->add_clue_text( $clue_C, '3.0,2.5' );
    $LLobj->add_clue_text( $clue_D, '3.9,1.4' );
@@ -1555,10 +1555,10 @@ sub triangle13_puzzle {         # 13 triangles
 
 
 
- #  $LLobj->add_answer_text( $entries[0], '0.4,4.2' );
+   #  $LLobj->add_answer_text( $entries[0], '0.4,4.2' );
    $LLobj->add_answer_text( $entries[0], '0.4,3.2' );
    $LLobj->add_answer_text( $entries[3], '0.4,2.2' );
-#   $LLobj->add_answer_text( $entries[9], '0.4,1.2' );
+   #   $LLobj->add_answer_text( $entries[9], '0.4,1.2' );
 
    $LLobj->add_answer_text( $entries[1], '0.75,3.5' );
    $LLobj->add_answer_text( $entries[4], '0.75,2.5' );
@@ -1576,21 +1576,21 @@ sub triangle13_puzzle {         # 13 triangles
 
    $LLobj->add_answer_text( $entries[12], '2.75,1.5' );
 
-#   $LLobj->add_answer_text( $entries[15], '3.4,1.2' );
+   #   $LLobj->add_answer_text( $entries[15], '3.4,1.2' );
 
 
 
    # add the lines for a 13-number triangular puzzle
    # to the LatticeLines object:
-#   $LLobj->add_line('0,0,0,1');
+   #   $LLobj->add_line('0,0,0,1');
    $LLobj->add_line('1,1,1,4');
    $LLobj->add_line('2,1,2,3');
 
-#   $LLobj->add_line('3,1,4,1');
+   #   $LLobj->add_line('3,1,4,1');
    $LLobj->add_line('0,2,3,2');
    $LLobj->add_line('0,3,2,3');
 
-#   $LLobj->add_line('-1,3,1,1');
+   #   $LLobj->add_line('-1,3,1,1');
    $LLobj->add_line('0,3,2,1');
    $LLobj->add_line('0,4,3,1');
 
@@ -1602,21 +1602,23 @@ sub triangle13_puzzle {         # 13 triangles
    $LLobj->add_line( '3,1,1,1', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '1,1,0,2', { 'stroke-width' => $thick_line_width } );
 
-my $A = 0.8;
-$LLobj->{min_x} -= $A;
-$LLobj->{max_x} += $A;
-$LLobj->{min_y} -= $A;
-$LLobj->{max_y} += $A;
+   my $A = 0.8;
+   $LLobj->{min_x} -= $A;
+   $LLobj->{max_x} += $A;
+   $LLobj->{min_y} -= $A;
+   $LLobj->{max_y} += $A;
 
    return $LLobj;
 }
 
-sub triangle13b_puzzle {         # 13 triangles
+sub triangle13b_puzzle {        # 13 triangles
 
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,2,2,3,3,5,5,7,11,2,3,5';
+   my $numbers_string = shift || 
+     # '1,1,2,2,3,3,5,5,7,11,2,3,5';
+     '5,5,5,5,5,11,11,11,11,11,11';
    my $target_size = 13;
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
    my $size    = scalar @entries;
@@ -1658,27 +1660,46 @@ sub triangle13b_puzzle {         # 13 triangles
    my $clue_L = $entries[1] * $entries[2] * $entries[6] * $entries[7];
 
 
-  $LLobj->add_clue_text( $clue_A, '0.4,4.7' );
-   $LLobj->add_clue_text( $clue_B, '1.6,3.9' );
-   $LLobj->add_clue_text( $clue_C, '3.0,2.5' );
+   $LLobj->add_clue_text( $clue_A, '0.6,4.6' );
+   $LLobj->add_clue_text( $clue_B, '1.6,3.85' );
+   $LLobj->add_clue_text( $clue_C, '3.15,2.4' );
    $LLobj->add_clue_text( $clue_D, '3.9,1.4' );
 
-   $LLobj->add_clue_text( $clue_E, '4.0,0.6' );
-   $LLobj->add_clue_text( $clue_F, '3.0,0.5' );
-   $LLobj->add_clue_text( $clue_G, '1.53,0.5' );
-   $LLobj->add_clue_text( $clue_H, '0.53,0.6' );
+   $LLobj->add_clue_text( $clue_E, '3.8,0.7' );
+   $LLobj->add_clue_text( $clue_F, '3.1,0.4' );
+   $LLobj->add_clue_text( $clue_G, '1.5,0.4' );
+   $LLobj->add_clue_text( $clue_H, '0.5,0.7' );
 
    $LLobj->add_clue_text( $clue_I, '-0.3,1.4' );
-   $LLobj->add_clue_text( $clue_J, '-0.5,2.5' );
-   $LLobj->add_clue_text( $clue_K, '-0.5,3.9' );
-   $LLobj->add_clue_text( $clue_L, '-0.3,4.7' );
+   $LLobj->add_clue_text( $clue_J, '-0.55,2.4' );
+   $LLobj->add_clue_text( $clue_K, '-0.45,3.85' );
+   $LLobj->add_clue_text( $clue_L, '-0.2,4.6' );
+
+   # add arrows pointing from clues to corresponding rows
+   $LLobj->add_arrow('0.5,5.0,0.5,4.0'); # clue a
+   $LLobj->add_arrow('1.5,4.0,1.5,3.5'); # clue b
+
+   $LLobj->add_arrow('3.0,2.5,2.5,2.5'); # clue c
+   $LLobj->add_arrow('4.0,1.5,3.0,1.5'); # clue d
+
+   $LLobj->add_arrow('4.0,0.5,3.0,1.5'); # clue e
+   $LLobj->add_arrow('3.0,0.5,2.5,1.0'); # clue f
+
+   $LLobj->add_arrow('1.5,0.5,1.5,1.0'); # clue g
+   $LLobj->add_arrow('0.5,0.5,0.5,1.5'); # clue h
+
+   $LLobj->add_arrow('-0.5,1.5,0.5,1.5'); # clue i
+   $LLobj->add_arrow('-0.5,2.5,0.0,2.5'); # clue j
+
+   $LLobj->add_arrow('-0.5,4.0,0.0,3.5'); # clue k
+   $LLobj->add_arrow('-0.5,5.0,0.5,4.0'); # clue l
 
 
 
- #  $LLobj->add_answer_text( $entries[0], '0.4,4.2' );
+   #  $LLobj->add_answer_text( $entries[0], '0.4,4.2' );
    $LLobj->add_answer_text( $entries[0], '0.4,3.2' );
    $LLobj->add_answer_text( $entries[3], '0.4,2.2' );
-#   $LLobj->add_answer_text( $entries[9], '0.4,1.2' );
+   #   $LLobj->add_answer_text( $entries[9], '0.4,1.2' );
 
    $LLobj->add_answer_text( $entries[1], '0.75,3.5' );
    $LLobj->add_answer_text( $entries[4], '0.75,2.5' );
@@ -1696,21 +1717,21 @@ sub triangle13b_puzzle {         # 13 triangles
 
    $LLobj->add_answer_text( $entries[12], '2.75,1.5' );
 
-#   $LLobj->add_answer_text( $entries[15], '3.4,1.2' );
+   #   $LLobj->add_answer_text( $entries[15], '3.4,1.2' );
 
 
 
    # add the lines for a 13-number triangular puzzle
    # to the LatticeLines object:
-#   $LLobj->add_line('0,0,0,1');
+   #   $LLobj->add_line('0,0,0,1');
    $LLobj->add_line('1,1,1,4');
    $LLobj->add_line('2,1,2,3');
 
-#   $LLobj->add_line('3,1,4,1');
+   #   $LLobj->add_line('3,1,4,1');
    $LLobj->add_line('0,2,3,2');
    $LLobj->add_line('0,3,2,3');
 
-#   $LLobj->add_line('-1,3,1,1');
+   #   $LLobj->add_line('-1,3,1,1');
    $LLobj->add_line('0,3,2,1');
    $LLobj->add_line('0,4,3,1');
 
@@ -1722,11 +1743,14 @@ sub triangle13b_puzzle {         # 13 triangles
    $LLobj->add_line( '3,1,1,1', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '1,1,0,2', { 'stroke-width' => $thick_line_width } );
 
-my $A = 0.8;
-$LLobj->{min_x} -= $A;
-$LLobj->{max_x} += $A;
-$LLobj->{min_y} -= $A;
-$LLobj->{max_y} += $A;
+ 
+
+
+   my $A = 0.8;
+   $LLobj->{min_x} -= $A;
+   $LLobj->{max_x} += $A;
+   $LLobj->{min_y} -= $A;
+   $LLobj->{max_y} += $A;
 
    return $LLobj;
 }
@@ -1800,21 +1824,21 @@ sub triangle16_puzzle {
    $LLobj->add_answer_text( $entries[4], '0.4,2.2' );
    $LLobj->add_answer_text( $entries[9], '0.4,1.2' );
 
- $LLobj->add_answer_text( $entries[2], '0.75,3.5' );
+   $LLobj->add_answer_text( $entries[2], '0.75,3.5' );
    $LLobj->add_answer_text( $entries[5], '0.75,2.5' );
    $LLobj->add_answer_text( $entries[10], '0.75,1.5' );
 
    $LLobj->add_answer_text( $entries[3], '1.4,3.2' );
    $LLobj->add_answer_text( $entries[6], '1.4,2.2' );
- $LLobj->add_answer_text( $entries[11], '1.4,1.2' );
+   $LLobj->add_answer_text( $entries[11], '1.4,1.2' );
 
-$LLobj->add_answer_text( $entries[7], '1.75,2.5' );
-$LLobj->add_answer_text( $entries[12], '1.75,1.5' );
+   $LLobj->add_answer_text( $entries[7], '1.75,2.5' );
+   $LLobj->add_answer_text( $entries[12], '1.75,1.5' );
 
    $LLobj->add_answer_text( $entries[8], '2.4,2.2' );
-$LLobj->add_answer_text( $entries[13], '2.4,1.2' );
+   $LLobj->add_answer_text( $entries[13], '2.4,1.2' );
 
-$LLobj->add_answer_text( $entries[14], '2.75,1.5' );
+   $LLobj->add_answer_text( $entries[14], '2.75,1.5' );
 
    $LLobj->add_answer_text( $entries[15], '3.4,1.2' );
 
