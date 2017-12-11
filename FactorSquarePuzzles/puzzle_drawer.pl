@@ -171,7 +171,9 @@ sub multi_puzzles {
             $puzzle_obj = rectangle3x8_puzzle('1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13');
          } elsif ( $type eq '3x8b' ) {
             $puzzle_obj = rectangle3x8b_puzzle('1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13');
-         } elsif ( $type eq '5x5' ) {
+         } elsif ( $type eq '4x4' ) {
+            $puzzle_obj = square4x4_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
+         }elsif ( $type eq '5x5' ) {
             $puzzle_obj = square5x5_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
          } elsif ( $type eq '5x5nn' ) {
             $puzzle_obj = square5x5nn_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
@@ -1083,11 +1085,178 @@ sub rectangle3x8b_puzzle {
    return $LLobj;
 }
 
-sub square5x5_puzzle {
+sub square4x4_puzzle {
 
    #    my $scale          = shift || 100;
    #  my $offset_x       = shift || 0.5;
    #  my $offset_y       = shift || 0.5;
+   my $numbers_string = shift || '1,2,3,5,7,11,2,3,5,7,13,2,3,5';
+   my $target_size = 16;
+   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+
+   my $std_line_width   = 0.02; # * $scale / 100;
+   my $thick_line_width = 0.06; # * $scale / 100;
+   my $angle            = pi / 2;
+   my $LLobj            = LatticeLines->new(
+                                            {
+                                             'basis' => [ [ 1, 0 ], [ 1 * cos($angle), -1 * 1 * sin($angle) ] ],
+
+                                             #      'offset' => [ $offset_x * $scale, $offset_y * $scale ],
+                                             # 'margin' => [1*$scale, 1*$scale],
+                                             #          'font-size'    => int( $scale / 3.3 ),
+                                             'text-anchor'  => 'middle',
+                                             'line_options' => { 'stroke-width' => $std_line_width },
+                                             'show_arrows'  => 1
+                                            }
+                                           );
+
+   # top edge column clues:
+   my $clue_A = $entries[0] * $entries[4] * $entries[8];
+   my $clue_B = $entries[1] * $entries[5] * $entries[9];
+   my $clue_C = $entries[2] * $entries[6] * $entries[10];
+   my $clue_D = $entries[3] * $entries[7] * $entries[12];
+
+   # upper right corner diagonal clue:
+   my $clue_UR = $entries[3] * $entries[6] * $entries[9];
+
+   # right edge row clues:
+   my $clue_E = $entries[1] * $entries[2] * $entries[3];
+   my $clue_F = $entries[5] * $entries[6] * $entries[7];
+   my $clue_G = $entries[9] * $entries[10] * $entries[11];
+   my $clue_H = $entries[13] * $entries[14] * $entries[15];
+
+  # lower right corner diagonal clue:
+   my $clue_LR = $entries[5] * $entries[10] * $entries[15]; 
+
+   # lower edge column clues:
+  my $clue_I = $entries[7] * $entries[11] * $entries[15];
+   my $clue_J = $entries[6] * $entries[10] * $entries[14];
+   my $clue_K = $entries[5] * $entries[9] * $entries[13];
+   my $clue_L = $entries[4] * $entries[8] * $entries[12];
+
+ # lower left corner diagonal clue:
+   my $clue_LL = $entries[6] * $entries[9] * $entries[12];
+
+  # left edge row clues:
+   my $clue_M = $entries[12] * $entries[13] * $entries[14];
+   my $clue_N = $entries[8] * $entries[9] * $entries[10];
+   my $clue_O = $entries[4] * $entries[5] * $entries[6];
+   my $clue_P = $entries[0] * $entries[1] * $entries[2];
+
+   # upper left corner diagonal clue:
+   my $clue_UL = $entries[0] * $entries[5] * $entries[10];
+
+
+   my $dist_from_box = -0.6;
+   $LLobj->add_clue_text( $clue_A, "0.5,4.4" );
+   $LLobj->add_clue_text( $clue_B, "1.5,4.4" );
+   $LLobj->add_clue_text( $clue_C, "2.5,4.4" );
+   $LLobj->add_clue_text( $clue_D, "3.5,4.4" );
+
+   $LLobj->add_clue_text( $clue_UR, "4.6,4.4" );
+
+   $LLobj->add_clue_text( $clue_E, "4.6,3.4" );
+   $LLobj->add_clue_text( $clue_F, "4.6,2.4" );
+   $LLobj->add_clue_text( $clue_G, "4.6,1.4" );
+   $LLobj->add_clue_text( $clue_H, "4.6,0.4" );
+
+   $LLobj->add_clue_text( $clue_LR, "4.6,-0.6" );
+
+   $LLobj->add_clue_text( $clue_I, "3.5,-0.6" );
+   $LLobj->add_clue_text( $clue_J, "2.5,-0.6" );
+   $LLobj->add_clue_text( $clue_K, "1.5,-0.6" );
+   $LLobj->add_clue_text( $clue_L, "0.5,-0.6" );
+
+   $LLobj->add_clue_text( $clue_LL, "-0.6,-0.6" );
+
+   $LLobj->add_clue_text( $clue_M, "-0.6,0.4" );
+   $LLobj->add_clue_text( $clue_N, "-0.6,1.4" );
+   $LLobj->add_clue_text( $clue_O, "-0.6,2.4" );
+   $LLobj->add_clue_text( $clue_P, "-0.6,3.4" );
+
+   $LLobj->add_clue_text( $clue_UL, "-0.6,4.4" );
+
+   # add clue arrows
+   $LLobj->add_arrow('0.5,4.5,0.5,4');
+   $LLobj->add_arrow('1.5,4.5,1.5,4');
+   $LLobj->add_arrow('2.5,4.5,2.5,4');
+   $LLobj->add_arrow('3.5,4.5,3.5,4');
+
+   $LLobj->add_arrow('4.5,3.5,4.0,3.5');
+   $LLobj->add_arrow('4.5,2.5,4.0,2.5');
+   $LLobj->add_arrow('4.5,1.5,4.0,1.5');
+   $LLobj->add_arrow('4.5,0.5,4.0,0.5');
+
+ $LLobj->add_arrow('0.5,-0.5,0.5,0');
+   $LLobj->add_arrow('1.5,-0.5,1.5,0');
+   $LLobj->add_arrow('2.5,-0.5,2.5,0');
+   $LLobj->add_arrow('3.5,-0.5,3.5,0');
+
+   $LLobj->add_arrow('-0.5,3.5,0,3.5');
+   $LLobj->add_arrow('-0.5,2.5,0,2.5');
+   $LLobj->add_arrow('-0.5,1.5,0,1.5');
+   $LLobj->add_arrow('-0.5,0.5,0,0.5');
+
+   # corner arrows:
+   $LLobj->add_arrow('-0.5,4.5,0,4.0');
+   $LLobj->add_arrow('4.5,4.5,4,4');
+   $LLobj->add_arrow('4.5,-0.5,4,0');
+   $LLobj->add_arrow('-0.5,-0.5,0,0');
+
+
+   $LLobj->add_answer_text( $entries[0], "0.5,3.4" );
+   $LLobj->add_answer_text( $entries[1], "1.5,3.4" );
+   $LLobj->add_answer_text( $entries[2], "2.5,3.4" );
+   $LLobj->add_answer_text( $entries[3], "3.5,3.4" );
+
+   $LLobj->add_answer_text( $entries[4], "0.5,2.4" );
+   $LLobj->add_answer_text( $entries[5], "1.5,2.4" );
+   $LLobj->add_answer_text( $entries[6], "2.5,2.4" );
+   $LLobj->add_answer_text( $entries[7], "3.5,2.4" );
+
+   $LLobj->add_answer_text( $entries[8], "0.5,1.4" );
+   $LLobj->add_answer_text( $entries[9], "1.5,1.4" );
+   $LLobj->add_answer_text( $entries[10], "2.5,1.4" );
+   $LLobj->add_answer_text( $entries[11], "3.5,1.4" );
+
+   $LLobj->add_answer_text( $entries[12], "0.5,0.4" );
+   $LLobj->add_answer_text( $entries[13], "1.5,0.4" );
+   $LLobj->add_answer_text( $entries[14], "2.5,0.4" );
+   $LLobj->add_answer_text( $entries[15], "3.5,0.4" );
+
+   # add the lines for a 9-number square puzzle
+   # to the LatticeLines object:
+
+   $LLobj->add_line('0,-1,0,5'); # verticals
+   $LLobj->add_line('1,-1,1,5');
+   $LLobj->add_line('2,-1,2,5');
+   $LLobj->add_line('3,-1,3,5');
+  $LLobj->add_line('4,-1,4,5');
+
+   $LLobj->add_line('-1,0,5,0'); # horizontals
+   $LLobj->add_line('-1,1,5,1');
+   $LLobj->add_line('-1,2,5,2');
+   $LLobj->add_line('-1,3,5,3');
+   $LLobj->add_line('-1,4,5,4');
+  
+
+   # these are the heavy lines outlining the area with the 9 numbers
+   $LLobj->add_line( '0,0,0,4', { 'stroke-width' => $thick_line_width } );
+   $LLobj->add_line( '4,0,4,4', { 'stroke-width' => $thick_line_width } );
+
+   $LLobj->add_line( '0,0,4,0', { 'stroke-width' => $thick_line_width } );
+   $LLobj->add_line( '0,4,4,4', { 'stroke-width' => $thick_line_width } );
+
+  $LLobj->set_directions(
+                         ['* Fill in each empty square with 1 or a prime number.',
+                          '* Each clue gives the product of the first 3 numbers in line with the arrow.']
+                        );
+
+   return $LLobj;
+}
+
+sub square5x5_puzzle {
+
    my $numbers_string = shift || '1,2,3,5,7,11,2,3,5,7,13,2,3';
    my $target_size = 25;
    my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
@@ -1277,6 +1446,7 @@ sub square5x5_puzzle {
 
    return $LLobj;
 }
+
 
 
 sub square5x5nn_puzzle {
