@@ -403,6 +403,27 @@ sub point_position {
     return $b;
 }
 
+sub get_font_size{
+   my $self = shift;
+   return $self->{'font-size'};
+}
+
+sub get_text_anchor{
+   my $self = shift;
+   return $self->{'text-anchor'};
+}
+
+sub set_directions{
+   my $self = shift;
+   my $directions = shift;
+   $self->{directions} = $directions;
+}
+
+sub get_directions{
+   my $self = shift;
+return $self->{directions};
+}
+
 sub text_svg {    # print the text (1st arg) at the position (2nd arg).
 
     # by default use the object's font-size and text-anchor
