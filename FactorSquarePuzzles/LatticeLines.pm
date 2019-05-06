@@ -76,7 +76,6 @@ sub put_ll_corner_at_origin {
 sub translate_by {
     my $self = shift;
     my ( $dx, $dy ) = @_;    # vector to shift by
-
 }
 
 sub add_line {               # adds a line and updates the min and max
@@ -145,7 +144,7 @@ sub add_answer_text {
 
 sub add_arrow {
     my $self                    = shift;
-    my $endpoints               = shift;         # string e.g. '0,1,1,0'
+    my $endpoints               = shift;         # string e.g. '0,1,1,0', or array ref e.g. ['0,1', '1,0']
     my $new_line_option_hashref = shift || {};
     if ( ref($endpoints) eq 'ARRAY' ) {          # stringify
         $endpoints = join( ",", @$endpoints );
@@ -176,11 +175,18 @@ sub add_arrow {
 }
 
 sub add_circle {
-    my $self   = shift;
-    my $center = shift; # string e.g. '0,1';
-    # these are coefficients of basis vectors, not (necessarily) cartesian
-    my $radius = shift;
-    $self->{'circles'}->{$center} = $radius;    #
+   my $self   = shift;
+   my $center = shift;          # string e.g. '0,1';
+   # these are coefficients of basis vectors, not (necessarily) cartesian
+   my $radius = shift;
+   $self->{'circles'}->{$center} = $radius; #
+
+   my ($a1, $a2) = split(",", $center);
+   my ( $ax, $ay ) = $self->_to_cartesian( $a1, $a2 );
+   $self->update_x_y_bounds( $ax - $radius, $ay - $radius);
+   $self->update_x_y_bounds( $ax - $radius, $ay + $radius);
+   $self->update_x_y_bounds( $ax + $radius, $ay - $radius);
+   $self->update_x_y_bounds( $ax + $radius, $ay + $radius);
 }
 
 sub min_max_x_y {

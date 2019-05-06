@@ -5,43 +5,69 @@ use Math::Trig;
 
 use lib '/home/tomfy/Non-Work/SvgPatternMaker/FactorSquarePuzzles';
 use LatticeLines;
-use Getopt::Std;
+use Getopt::Long;
 
 use constant THICKWIDTH => 0.05;
 use constant MARGIN => 35;
 
-use vars qw($opt_p $opt_s $opt_w $opt_a $opt_o $opt_r $opt_c $opt_n $opt_f);
-
-# -p <puzzle pattern. Options are  2x3 (default), 2x3b, 3x3, 2x4, 3x4, 3x8, 5x5, 6x6,
-#                                  5x5nn, tri6nn, tri10nn,
-#                                  tri9, tri13_3, tri13_4, tri16
-# -s <scale. e.g. 50>
-# -w <what to show? clues, answers, both, neither. (default is clues)>
-# -a <show arrows? 0/1, default: 1> (not implemented - arrows are shown if defined)
-# -o <orientation p: portrait l: landscape. default: p>
-# -r <number of rows. Default: 1>
-# -c <number of columns. Default: 1>
-# -n <number of pages. Default: 1>
-# -f <output filename. Default: print to STDOUT>
-# typical usage: puzzle_drawer.pl -p tri9 -r 3 -c 1 > tri9.svg
-
-# get options
-getopts("p:s:w:a:o:r:c:n:f:");
+# typical usage: puzzle_drawer.pl -puzzle tri9 -rows 3 -cols 1 > tri9.svg
 
 # defaults:
-my $type        = $opt_p || '2x3';
-my $scale       = $opt_s || 54;
-my $orientation = $opt_o || 'p'; # default is portrait
-my $n_rows      = $opt_r || 1;
-my $n_cols      = $opt_c || 1;
-my $what_to_show = $opt_w
-  || 'clues';         # by default show the clues but not the answers.
-my $n_pages         = $opt_n || 1;
-my $output_filename = $opt_f;
+my $puzzle_type = '2x3';
+my $scale = 54;
+my $orientation = 'p';          # for portrait orientation
+my $n_rows = 1;
+my $n_cols = 1;
+my $n_pages = 1;
+my $what_to_show = 'clues';     # or 'answers', or 'both'.
+my $output_filename = undef;
+
 my $show_clues      = 1;
 my $show_answers    = 0;
+my $show_arrows     = 1;
+my $n_depth = 1;
 
-my $show_arrows = ( defined $opt_a and uc $opt_a eq 'N' ) ? 0 : 1;
+my $factor_string = undef;
+
+my %type_defaultfactorstring = (
+                                '2x3' => '1,2,3,5,7,2',
+                                '2x4' => '1,2,3,5,7,11,2,3',
+                                '2x5' => '1,2,3,5,7,11,2,3,5,7',
+                                '3x3' => '2,3,5,1,2,3,5,7',
+                                '3x4' => '1,1,2,2,3,3,5,5,7,7,11,2',
+                                '3x8' => '1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13',
+                                '3x8b' => '1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13',
+                                '4x4' => '1,2,3,5,7,11, 2,3,5,7,13, 2,3',
+                                '5x5' => '1,2,3,5,7,11,2,3,5,7,13,2,3',
+                                '5x5b' => '1,2,3,5,7,11,2,3,5,7,13,2,3',
+                                '5x5nn' => '1,2,3,5,7,11,2,3,5,7,13,2,3',
+                                '6x6' => '1,2,3,5,7,11, 1,2,3,5, 1,2,3,5,7,11,13',
+                                'tri6' => '1,2,3,5,7,11',
+                                'tri9' => '1,1,1,2,2,2,3,5,7',
+                                'tri10' =>  '1,2,3,5,7,11',
+                                'tri13_3' => '1,1,2,2,3,3,5,5,7,11,2,3,5',
+                                'tri13_4' => '1,1,2,2,3,3,5,5,7,11,2,3,5',
+                                'tri16' => '1,1,1,2,2,2,3,3,5,5,7,11,3,5,7,11',
+                                'hex12' => '1,2,3,5,7,1,2,3,5,7,11,2',
+                               );
+
+GetOptions(
+           'puzzle_type=s' => \$puzzle_type, # e.g. '2x4'
+           'scale=i' => \$scale,             # e.g. 
+           'orientation=s' => \$orientation, # name of file defining groups of species.
+           'rows=i' => \$n_rows,
+           'columns|cols=i' => \$n_cols,
+           'pages=i' => \$n_pages,
+           'show=s'    => \$what_to_show, # 'clues', 'answers', or 'both' (default is clues)
+           'output_filename=s' => \$output_filename,
+           'factors|factor_string=s' => \$factor_string, # 
+           'depth=i' => \$n_depth,
+          );
+
+
+$factor_string = (defined $factor_string)? $factor_string : $type_defaultfactorstring{$puzzle_type};
+
+#my $show_arrows = 1; # ( defined $opt_a and uc $opt_a eq 'N' ) ? 0 : 1;
 if ( $what_to_show eq 'answers' ) {
    $show_clues   = 0;
    $show_answers = 1;
@@ -82,7 +108,7 @@ for my $i_page ( 1 .. $n_pages ) {
    $svg_solutions_string .= $svg_top_stuff;
 
    my ( $puzzle_page_svg, $puzzle_solution_page_svg ) =
-     multi_puzzles( $type, $width, $height, $n_rows, $n_cols );
+     multi_puzzles( $puzzle_type, $factor_string, $width, $height, $n_rows, $n_cols, $n_depth );
    $svg_string           .= $puzzle_page_svg;
    $svg_solutions_string .= $puzzle_solution_page_svg;
 
@@ -99,16 +125,16 @@ for my $i_page ( 1 .. $n_pages ) {
 if ( defined $output_filename ) {
    my $solutions_filename = $output_filename . '_solutions.svg';
    $output_filename .= '.svg';
-   open my $fhout, ">$output_filename";
+   open my $fhout, ">", "$output_filename";
    print $fhout $svg_string;
    close $fhout;
  
-   open $fhout, ">$solutions_filename";
+   open $fhout, ">", "$solutions_filename";
    print $fhout $svg_solutions_string;
    close $fhout;
 } else {
    print $svg_string;
-   open my $fhout, ">solutions.svg";
+   open my $fhout, ">", "solutions.svg";
    print $fhout $svg_solutions_string;
    close $fhout;
 }
@@ -116,16 +142,20 @@ if ( defined $output_filename ) {
 # end of main.
 
 sub multi_puzzles {
-   my $type                 = shift || '2x3';
+   my $type                 = shift // '2x3';
+   my $factor_str = shift // '1,2,3,5,7';
    my $printing_area_width  = shift;
    my $printing_area_height = shift;
    my $n_rows               = shift;
    my $n_cols               = shift;
-   my $margin               = shift || MARGIN;
+   my $n_depth              = shift;
+   my $margin               = shift // MARGIN;
+
+   # print "Factor string: $factor_str \n"; # exit;
    $printing_area_width  -= 2 * $margin;
    my $puzzle_area_width = $printing_area_width;
    $printing_area_height -= 2 * $margin;
-   my $writing_area_height = 0.14*$printing_area_height;
+   my $writing_area_height = 0.16*$printing_area_height;
    my $puzzle_area_height = $printing_area_height - $writing_area_height;
 
    #   my $sum_of_gaps = 0.5*min($printing_area_width, $printing_area_height);
@@ -158,40 +188,46 @@ sub multi_puzzles {
                $margin;
          my $puzzle_obj;
          if ( $type eq '2x3' ) {
-            $puzzle_obj = rectangle2x3_puzzle('1,2,3,5,7,11');
+            $puzzle_obj = rectangle2x3_puzzle($factor_str, $n_depth); # '1,2,3,5,7,2');
          } elsif ( $type eq '2x3b'  or  $type eq '2x3B' ) {
-            $puzzle_obj = rectangle2x3b_puzzle('1,2,3,5,7,11');
+            $puzzle_obj = rectangle2x3b_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11');
          } elsif ( $type eq '2x4' ) {
-            $puzzle_obj = rectangle2x4_puzzle('1,2,3,5,7,11,2,3');
+            $puzzle_obj = rectangle2x4_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11,2,3');
+         } elsif ( $type eq '2x5' ) {
+            $puzzle_obj = rectangle2x5_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11,2,3');
          } elsif ( $type eq '3x3' ) {
-            $puzzle_obj = square3x3_puzzle('2,3,5,1,2,3,5,7');
+            $puzzle_obj = square3x3_puzzle($factor_str, $n_depth); #'2,3,5,1,2,3,5,7');
          } elsif ( $type eq '3x4' ) {
-            $puzzle_obj = rectangle3x4_puzzle();
+            $puzzle_obj = rectangle3x4_puzzle($factor_str, $n_depth);
          } elsif ( $type eq '3x8' ) {
-            $puzzle_obj = rectangle3x8_puzzle('1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13');
+            $puzzle_obj = rectangle3x8_puzzle($factor_str, $n_depth); # '1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13');
          } elsif ( $type eq '3x8b' ) {
-            $puzzle_obj = rectangle3x8b_puzzle('1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13');
+            $puzzle_obj = rectangle3x8b_puzzle($factor_str, $n_depth); # '1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 5,5,5,5, 7,7,7, 11,11, 13');
          } elsif ( $type eq '4x4' ) {
-            $puzzle_obj = square4x4_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
-         }elsif ( $type eq '5x5' ) {
-            $puzzle_obj = square5x5_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
+            $puzzle_obj = square4x4_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11,2,3,5,7,13,2,3');
+         } elsif ( $type eq '5x5' ) {
+            $puzzle_obj = square5x5_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11,2,3,5,7,13,2,3');
+         } elsif ( $type eq '5x5b' or $type eq '5x5B' ) {
+            $puzzle_obj = square5x5b_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11,2,3,5,7,13,2,3');
          } elsif ( $type eq '5x5nn' ) {
-            $puzzle_obj = square5x5nn_puzzle('1,2,3,5,7,11,2,3,5,7,13,2,3');
-         }elsif ( $type eq '6x6' ) {
-            $puzzle_obj =
-              square6x6_puzzle('1,2,3,5,7,11, 1,2,3,5, 1,2,3,5,7,11,13');
+            $puzzle_obj = square5x5nn_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11,2,3,5,7,13,2,3');
+         } elsif ( $type eq '6x6' ) {
+            $puzzle_obj = square6x6_puzzle($factor_str, $n_depth); # '1,2,3,5,7,11, 1,2,3,5, 1,2,3,5,7,11,13');
          } elsif ( $type eq 'tri6') {
-            $puzzle_obj = triangle6_puzzle();
+            $puzzle_obj = triangle6_puzzle($factor_str, $n_depth); # );
          } elsif ($type eq 'tri9') {
-            $puzzle_obj = triangle9_puzzle();
+            $puzzle_obj = triangle9_puzzle($factor_str, $n_depth); # );
          } elsif ( $type eq 'tri10') {
-            $puzzle_obj = triangle10_puzzle();
+            $puzzle_obj = triangle10_puzzle($factor_str, $n_depth); # );
          } elsif ( $type eq 'tri13_3') {
-            $puzzle_obj = triangle13_3_puzzle();
+            $puzzle_obj = triangle13_3_puzzle($factor_str, $n_depth); # );
          } elsif ( $type eq 'tri13_4') {
-            $puzzle_obj = triangle13_4_puzzle();
+            $puzzle_obj = triangle13_4_puzzle($factor_str, $n_depth); # );
          } elsif ( $type eq 'tri16') {
-            $puzzle_obj = triangle16_puzzle();
+            $puzzle_obj = triangle16_puzzle($factor_str, $n_depth); # );
+         } elsif ( $type eq 'hex12') {
+        #    $puzzle_obj = hex12_puzzle($factor_str, $n_depth);
+            $puzzle_obj = bunch_of_12grapes_puzzle($factor_str, $n_depth);
          } else {
             die "Puzzle type $type is unknown.\n";
          }
@@ -201,7 +237,7 @@ sub multi_puzzles {
 
          # svg body:
          #	print "w, h, scale : $w, $h, $scale, max puzzle width, height: $max_puzzle_width, $max_puzzle_height.\n";
-         my $font_size = 1.1*$puzzle_obj->get_font_size()*$scale;
+         my $font_size = 1.0*$puzzle_obj->get_font_size()*$scale;
          my $line_y_spacing = $font_size * 1.75;
          if ($row == 0 and $col == 0) {
             $show_answers = 1;
@@ -215,10 +251,10 @@ sub multi_puzzles {
                $svg_string .= $directions_svg_text_string;
                $y_directions += $line_y_spacing;
             }
-             $svg_string .=  '<text x="' . 100 . '" y="' . ($margin + $writing_area_height + 0.5*$line_y_spacing) . '" '
-                 . ' font-size="' . $font_size . '" style="text-anchor:start'  . '" > '
-                   . 'Example: '
-                     . "</text>\n";
+            $svg_string .=  '<text x="' . 100 . '" y="' . ($margin + $writing_area_height + 0.5*$line_y_spacing) . '" '
+              . ' font-size="' . $font_size . '" style="text-anchor:start'  . '" > '
+                . 'Example: '
+                  . "</text>\n";
          } else {
             $show_answers = 0;
          }
@@ -252,15 +288,51 @@ sub multi_puzzles {
    return ( $svg_string, $svg_solutions_string );
 }                               # end of multi_puzzles
 
+sub get_entries{
+   my $n_entries = shift;
+   my $numbers_str = shift;
+   my $n_depth = shift // 1;
+
+   $numbers_str =~ s/\s+//g;
+   my @Ns = split(",", $numbers_str);
+   my @ns = ();
+   while(scalar @ns < $n_entries*$n_depth){
+      push @ns, @Ns;
+   }
+   # my $n = int($n_entries * $n_depth / scalar @ns) + 1;
+   # my $s = '';
+   # for (1..$n) {
+   #    $s .= "$numbers_str,";
+   # }
+   # $s =~ s/,\s*$//;
+   # @ns = split(",", $s);
+@ns = @ns[0..$n_entries*$n_depth-1];
+   my $numbers = randomize_numbers(\@ns, scalar @ns);
+   print STDERR scalar @$numbers, "    ", join(", ", @$numbers), "\n";
+   my @entries = ((1) x $n_entries);
+   my $i = 0;
+   for (1..$n_depth) {
+      for my $j (0..$n_entries-1) {
+         my $k = $i % (scalar @$numbers);
+         $entries[$j] *= $numbers->[$k];
+         $i++;
+      }
+   }
+   return \@entries;
+}
+
 sub rectangle2x3_puzzle {       # 2 rows, 3 columns
 
    #   my $scale          = shift || 100;
    my $numbers_string = shift || '1,2,3,5,7,11';
-
+   my $n_depth = shift // 1;
    my $target_size = 6;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries = @{ get_entries($target_size, $numbers_string, $n_depth)};
+  #   @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02; # 2 * $scale / 100;
+               #     print STDERR "Entries:  ", join("; ", @entries), "\n"; exit;
+
+   my $std_line_width   = 0.02;       # 2 * $scale / 100;
    my $thick_line_width = THICKWIDTH; # 0.06; # 6 * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -339,11 +411,11 @@ sub rectangle2x3_puzzle {       # 2 rows, 3 columns
    $LLobj->add_arrow('2.5,-0.5,2.0,0');
    $LLobj->add_arrow('3.5,-0.5,3.0,0');
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in the ',
-                          '  row, column or diagonal pointed to by the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* In each empty square put 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
 
    return $LLobj;
 }
@@ -351,12 +423,13 @@ $LLobj->set_directions(
 sub rectangle2x3b_puzzle {      # 3 rows, 2 columns
 
    #   my $scale          = shift || 100;
-   my $numbers_string = shift || '1,2,3,5,7,11';
-
+   my $numbers_string = shift // '1,2,3,5,7,11';
+   my $n_depth = shift // 1;
    my $target_size = 6;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries = @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02; # 2 * $scale / 100;
+   my $std_line_width   = 0.02;       # 2 * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.06; # 6 * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -449,11 +522,11 @@ sub rectangle2x3b_puzzle {      # 3 rows, 2 columns
    #   $LLobj->add_arrow('2.5,-0.5,2.0,0');
    $LLobj->add_arrow('-0.5,2.5,0.0,2');
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in the ',
-                          '  row, column or diagonal pointed to by the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
 
    return $LLobj;
 }
@@ -464,12 +537,13 @@ sub rectangle2x4_puzzle {
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,2,3,5,7,11,2,3';
-
+   my $numbers_string = shift // '1,2,3,5,7,11,2,3';
+   my $n_depths = shift // 1;
    my $target_size = 8;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02; # 2 * $scale / 100;
+   my $std_line_width   = 0.02;       # 2 * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.06; #  * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -534,14 +608,11 @@ sub rectangle2x4_puzzle {
    $LLobj->add_line('0,3,4,3');
 
    $LLobj->add_line('-1,-1,-1,0'); # verticals
-   $LLobj->add_line('0,-1,0,0');
-   $LLobj->add_line('0,2,0,3');
+   $LLobj->add_line('0,-1,0,3');
    $LLobj->add_line('1,-1,1,3');
    $LLobj->add_line('2,-1,2,3');
    $LLobj->add_line('3,-1,3,3');
-   $LLobj->add_line('4,-1,4,0');
-   $LLobj->add_line('4,2,4,3');
-
+   $LLobj->add_line('4,-1,4,3');
    $LLobj->add_line('5,-1,5,0');
 
    # these are the heavy lines outlining the area with the 6 answer numbers
@@ -564,26 +635,152 @@ sub rectangle2x4_puzzle {
    $LLobj->add_arrow('3.5,-0.5,3.0,0');
    $LLobj->add_arrow('4.5,-0.5,4.0,0');
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in the ',
-                          '  row, column or diagonal pointed to by the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
 
    return $LLobj;
 }
+
+sub rectangle2x5_puzzle {
+
+   #   my $scale          = shift || 100;
+   #   my $offset_x       = shift || 0.5;
+   #   my $offset_y       = shift || 0.5;
+   my $numbers_string = shift // '1,2,3,5,7,11,2,3';
+   my $n_depth = shift // 1;
+   my $target_size = 10;
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
+
+   my $std_line_width   = 0.02;       # 2 * $scale / 100;
+   my $thick_line_width = THICKWIDTH; #0.06; #  * $scale / 100;
+   my $angle            = pi / 2;
+   my $LLobj            = LatticeLines->new(
+                                            {
+                                             'basis' => [ [ 1, 0 ], [ 1 * cos($angle), -1 * 1 * sin($angle) ] ],
+
+                                             #          'offset' => [ $offset_x * $scale, $offset_y * $scale ],
+                                             # 'margin' => [1*$scale, 1*$scale],
+                                             #  'font-size'    => int( $scale / 3.3 ),
+                                             'text-anchor'  => 'middle',
+                                             'line_options' => { 'stroke-width' => $std_line_width },
+                                             'show_arrows'  => 1,
+                                            }
+                                           );
+
+   # column clues
+   my $clue_A = $entries[0] * $entries[5];
+   my $clue_B = $entries[1] * $entries[6];
+   my $clue_C = $entries[2] * $entries[7];
+   my $clue_D = $entries[3] * $entries[8];
+   my $clue_E = $entries[4] * $entries[9];
+   # diagonal clues
+   my $clue_F = $entries[5] * $entries[1];
+   my $clue_G = $entries[6] * $entries[2];
+   my $clue_H = $entries[7] * $entries[3];
+
+   # other diagonal clues
+   my $clue_I = $entries[7] * $entries[1];
+   my $clue_J = $entries[8] * $entries[2];
+   my $clue_K = $entries[9] * $entries[3];
+
+   $LLobj->add_clue_text( $clue_A, '0.5,2.45' );
+   $LLobj->add_clue_text( $clue_B, '1.5,2.45' );
+   $LLobj->add_clue_text( $clue_C, '2.5,2.45' );
+   $LLobj->add_clue_text( $clue_D, '3.5,2.45' );
+   $LLobj->add_clue_text( $clue_E, '4.5,2.45' );
+
+   $LLobj->add_clue_text( $clue_F, '-0.5,-0.6' );
+   $LLobj->add_clue_text( $clue_G, '0.5,-0.6' );
+   $LLobj->add_clue_text( $clue_H, '1.5,-0.6' );
+
+   $LLobj->add_clue_text( $clue_I, '3.5,-0.6' );
+   $LLobj->add_clue_text( $clue_J, '4.5,-0.6' );
+   $LLobj->add_clue_text( $clue_K, '5.5,-0.6' );
+
+   $LLobj->add_answer_text( $entries[0], '0.5,1.4' );
+   $LLobj->add_answer_text( $entries[1], '1.5,1.4' );
+   $LLobj->add_answer_text( $entries[2], '2.5,1.4' );
+   $LLobj->add_answer_text( $entries[3], '3.5,1.4' );
+   $LLobj->add_answer_text( $entries[4], '4.5,1.4' );
+
+   $LLobj->add_answer_text( $entries[5], '0.5,0.4' );
+   $LLobj->add_answer_text( $entries[6], '1.5,0.4' );
+   $LLobj->add_answer_text( $entries[7], '2.5,0.4' );
+   $LLobj->add_answer_text( $entries[8], '3.5,0.4' );
+   $LLobj->add_answer_text( $entries[9], '4.5,0.4' );
+
+   # add the lines for a 2x5 rectangular puzzle
+   # to the LatticeLines object:
+
+   $LLobj->add_line('-1,-1,2,-1'); # horizontals
+   $LLobj->add_line('3,-1,6,-1');  # horizontals
+   $LLobj->add_line('-1,0,6,0');
+   $LLobj->add_line('0,1,5,1');
+   $LLobj->add_line('0,2,5,2');
+   $LLobj->add_line('0,3,5,3');
+
+   $LLobj->add_line('-1,-1,-1,0'); # verticals
+   #   $LLobj->add_line('0,-1,0,0');
+   #   $LLobj->add_line('0,2,0,3');
+   $LLobj->add_line('0,-1,0,3');
+   $LLobj->add_line('1,-1,1,3');
+   $LLobj->add_line('2,-1,2,3');
+   $LLobj->add_line('3,-1,3,3');
+   $LLobj->add_line('4,-1,4,3');
+   $LLobj->add_line('5,-1,5,3');
+   $LLobj->add_line('6,-1,6,0'); # verticals
+
+   #   $LLobj->add_line('4,2,4,3');
+
+   #   $LLobj->add_line('5,-1,5,0');
+
+   # these are the heavy lines outlining the area with the 6 answer numbers
+   $LLobj->add_line( '0,0,0,2', { 'stroke-width' => $thick_line_width } );
+   $LLobj->add_line( '0,0,5,0', { 'stroke-width' => $thick_line_width } );
+
+   $LLobj->add_line( '0,2,5,2', { 'stroke-width' => $thick_line_width } );
+   $LLobj->add_line( '5,0,5,2', { 'stroke-width' => $thick_line_width } );
+
+   $LLobj->add_arrow('0.5,2.5,0.5,2');
+   $LLobj->add_arrow('1.5,2.5,1.5,2');
+   $LLobj->add_arrow('2.5,2.5,2.5,2');
+   $LLobj->add_arrow('3.5,2.5,3.5,2');
+   $LLobj->add_arrow('4.5,2.5,4.5,2');
+
+   $LLobj->add_arrow('-0.5,-0.5,0.0,0');
+   $LLobj->add_arrow('0.5,-0.5,1.0,0');
+   $LLobj->add_arrow('1.5,-0.5,2.0,0');
+
+   $LLobj->add_arrow('3.5,-0.5,3.0,0');
+   $LLobj->add_arrow('4.5,-0.5,4.0,0');
+   $LLobj->add_arrow('5.5,-0.5,5.0,0');
+
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
+
+   return $LLobj;
+}
+
 
 sub rectangle3x4_puzzle {
 
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,2,2,3,3, 5,5,7,7,11,2';
-
+   my $numbers_string = shift // '1,1,2,2,3,3, 5,5,7,7,11,2';
+   my $n_depth = shift // 1;
    my $target_size = 12; # the number of answer numbers to be filled in.
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -692,11 +889,11 @@ sub rectangle3x4_puzzle {
    $LLobj->add_arrow('4.5,-0.5,4.0,0');
    $LLobj->add_arrow('4.5,0.5,4.0,1');
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in the ',
-                          '  row, column or diagonal pointed to by the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
 
    return $LLobj;
 }                               # end of sub rectangle3x4_puzzle
@@ -706,12 +903,13 @@ sub rectangle3x8_puzzle {
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,2,2,3,3, 5,5,7,7,11,2';
-
+   my $numbers_string = shift // '1,1,2,2,3,3, 5,5,7,7,11,2';
+   my $n_depth = shift // 1;
    my $target_size = 24; # the number of answer numbers to be filled in.
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -863,11 +1061,11 @@ sub rectangle3x8_puzzle {
    $LLobj->add_arrow('8.5,-0.5,8.0,0');
    $LLobj->add_arrow('8.5,0.5,8.0,1');
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in the ',
-                          '  row, column or diagonal pointed to by the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
 
    return $LLobj;
 }
@@ -877,12 +1075,13 @@ sub rectangle3x8b_puzzle {
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,2,2,3,3, 5,5,7,7,11,2';
-
+   my $numbers_string = shift // '1,1,2,2,3,3, 5,5,7,7,11,2';
+   my $n_depth = shift // 1;
    my $target_size = 24; # the number of answer numbers to be filled in.
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)}; 
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -1070,29 +1269,28 @@ sub rectangle3x8b_puzzle {
    $LLobj->add_arrow('8.5,1.5,8.0,1.5');
    $LLobj->add_arrow('8.5,2.5,8.0,2.5');
 
- my $A = 0.1;
+   my $A = 0.1;
    $LLobj->{min_x} -= $A;
    $LLobj->{max_x} += $A;
    $LLobj->{min_y} -= $A;
    $LLobj->{max_y} += $A;
 
    $LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in the ',
-                          '  row, column or diagonal pointed to by the arrow.']
-                        );
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
 
    return $LLobj;
 }
 
 sub square4x4_puzzle {
 
-   #    my $scale          = shift || 100;
-   #  my $offset_x       = shift || 0.5;
-   #  my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,2,3,5,7,11,2,3,5,7,13,2,3,5';
+   my $numbers_string = shift // '1,2,3,5,7,11,2,3,5,7,13,2,3,5';
+   my $n_depth = shift // 1;
    my $target_size = 16;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
    my $thick_line_width = 0.06; # * $scale / 100;
@@ -1114,7 +1312,7 @@ sub square4x4_puzzle {
    my $clue_A = $entries[0] * $entries[4] * $entries[8];
    my $clue_B = $entries[1] * $entries[5] * $entries[9];
    my $clue_C = $entries[2] * $entries[6] * $entries[10];
-   my $clue_D = $entries[3] * $entries[7] * $entries[12];
+   my $clue_D = $entries[3] * $entries[7] * $entries[11];
 
    # upper right corner diagonal clue:
    my $clue_UR = $entries[3] * $entries[6] * $entries[9];
@@ -1125,19 +1323,19 @@ sub square4x4_puzzle {
    my $clue_G = $entries[9] * $entries[10] * $entries[11];
    my $clue_H = $entries[13] * $entries[14] * $entries[15];
 
-  # lower right corner diagonal clue:
+   # lower right corner diagonal clue:
    my $clue_LR = $entries[5] * $entries[10] * $entries[15]; 
 
    # lower edge column clues:
-  my $clue_I = $entries[7] * $entries[11] * $entries[15];
+   my $clue_I = $entries[7] * $entries[11] * $entries[15];
    my $clue_J = $entries[6] * $entries[10] * $entries[14];
    my $clue_K = $entries[5] * $entries[9] * $entries[13];
    my $clue_L = $entries[4] * $entries[8] * $entries[12];
 
- # lower left corner diagonal clue:
+   # lower left corner diagonal clue:
    my $clue_LL = $entries[6] * $entries[9] * $entries[12];
 
-  # left edge row clues:
+   # left edge row clues:
    my $clue_M = $entries[12] * $entries[13] * $entries[14];
    my $clue_N = $entries[8] * $entries[9] * $entries[10];
    my $clue_O = $entries[4] * $entries[5] * $entries[6];
@@ -1187,7 +1385,7 @@ sub square4x4_puzzle {
    $LLobj->add_arrow('4.5,1.5,4.0,1.5');
    $LLobj->add_arrow('4.5,0.5,4.0,0.5');
 
- $LLobj->add_arrow('0.5,-0.5,0.5,0');
+   $LLobj->add_arrow('0.5,-0.5,0.5,0');
    $LLobj->add_arrow('1.5,-0.5,1.5,0');
    $LLobj->add_arrow('2.5,-0.5,2.5,0');
    $LLobj->add_arrow('3.5,-0.5,3.5,0');
@@ -1231,7 +1429,7 @@ sub square4x4_puzzle {
    $LLobj->add_line('1,-1,1,5');
    $LLobj->add_line('2,-1,2,5');
    $LLobj->add_line('3,-1,3,5');
-  $LLobj->add_line('4,-1,4,5');
+   $LLobj->add_line('4,-1,4,5');
 
    $LLobj->add_line('-1,0,5,0'); # horizontals
    $LLobj->add_line('-1,1,5,1');
@@ -1247,19 +1445,22 @@ sub square4x4_puzzle {
    $LLobj->add_line( '0,0,4,0', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '0,4,4,4', { 'stroke-width' => $thick_line_width } );
 
-  $LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the first 3 numbers in line with the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the first 3 numbers in',
+                           '  line with the arrow.']
+                         );
 
    return $LLobj;
 }
 
 sub square5x5_puzzle {
 
-   my $numbers_string = shift || '1,2,3,5,7,11,2,3,5,7,13,2,3';
+   my $numbers_string = shift // '1,2,3,5,7,11,2,3,5,7,13,2,3';
+   my $n_depth = shift // 1;
    my $target_size = 25;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
    my $thick_line_width = 0.06; # * $scale / 100;
@@ -1307,7 +1508,7 @@ sub square5x5_puzzle {
    # lower left corner diagonal clue:
    my $clue_LL = $entries[12] * $entries[16] * $entries[20];
 
-  # left edge row clues:
+   # left edge row clues:
    my $clue_P = $entries[20] * $entries[21] * $entries[22];
    my $clue_Q = $entries[15] * $entries[16] * $entries[17];
    my $clue_R = $entries[10] * $entries[11] * $entries[12];
@@ -1325,7 +1526,7 @@ sub square5x5_puzzle {
    $LLobj->add_clue_text( $clue_D, "3.5,5.4" );
    $LLobj->add_clue_text( $clue_E, "4.5,5.4" );
 
- $LLobj->add_clue_text( $clue_UR, "5.5,5.4" );
+   $LLobj->add_clue_text( $clue_UR, "5.5,5.4" );
 
    $LLobj->add_clue_text( $clue_F, "5.6,4.4" );
    $LLobj->add_clue_text( $clue_G, "5.6,3.4" );
@@ -1333,7 +1534,7 @@ sub square5x5_puzzle {
    $LLobj->add_clue_text( $clue_I, "5.6,1.4" );
    $LLobj->add_clue_text( $clue_J, "5.6,0.4" );
 
- $LLobj->add_clue_text( $clue_LR, "5.5,-0.6" );
+   $LLobj->add_clue_text( $clue_LR, "5.5,-0.6" );
 
    $LLobj->add_clue_text( $clue_K, "4.5,-0.6" );
    $LLobj->add_clue_text( $clue_L, "3.5,-0.6" );
@@ -1341,7 +1542,7 @@ sub square5x5_puzzle {
    $LLobj->add_clue_text( $clue_N, "1.5,-0.6" );
    $LLobj->add_clue_text( $clue_O, "0.5,-0.6" );
 
- $LLobj->add_clue_text( $clue_LL, "-0.5,-0.6" );
+   $LLobj->add_clue_text( $clue_LL, "-0.5,-0.6" );
 
    $LLobj->add_clue_text( $clue_P, "-0.6,0.4" );
    $LLobj->add_clue_text( $clue_Q, "-0.6,1.4" );
@@ -1349,7 +1550,7 @@ sub square5x5_puzzle {
    $LLobj->add_clue_text( $clue_S, "-0.6,3.4" );
    $LLobj->add_clue_text( $clue_T, "-0.6,4.4" );
 
- $LLobj->add_clue_text( $clue_UL, "-0.5,5.4" );
+   $LLobj->add_clue_text( $clue_UL, "-0.5,5.4" );
 
    # add clue arrows
    $LLobj->add_arrow('0.5,5.5,0.5,5');
@@ -1364,7 +1565,7 @@ sub square5x5_puzzle {
    $LLobj->add_arrow('5.5,1.5,5.0,1.5');
    $LLobj->add_arrow('5.5,0.5,5.0,0.5');
 
- $LLobj->add_arrow('0.5,-0.5,0.5,0');
+   $LLobj->add_arrow('0.5,-0.5,0.5,0');
    $LLobj->add_arrow('1.5,-0.5,1.5,0');
    $LLobj->add_arrow('2.5,-0.5,2.5,0');
    $LLobj->add_arrow('3.5,-0.5,3.5,0');
@@ -1439,13 +1640,230 @@ sub square5x5_puzzle {
    $LLobj->add_line( '0,0,5,0', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '0,5,5,5', { 'stroke-width' => $thick_line_width } );
 
-  $LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the first 3 numbers in line with the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the first 3 numbers', '  in line with the arrow.']
+                         );
 
    return $LLobj;
 }
+
+
+sub square5x5b_puzzle {
+
+   my $numbers_string = shift // '1,2,3,5,7,11,2,3,5,7,13,2,3';
+   my $n_depth = shift // 1;
+   my $target_size = 25;
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
+
+   my $std_line_width   = 0.02; # * $scale / 100;
+   my $thick_line_width = 0.06; # * $scale / 100;
+   my $angle            = pi / 2;
+   my $LLobj            = LatticeLines->new(
+                                            {
+                                             'basis' => [ [ 1, 0 ], [ 1 * cos($angle), -1 * 1 * sin($angle) ] ],
+
+                                             #      'offset' => [ $offset_x * $scale, $offset_y * $scale ],
+                                             # 'margin' => [1*$scale, 1*$scale],
+                                             #          'font-size'    => int( $scale / 3.3 ),
+                                             'text-anchor'  => 'middle',
+                                             'line_options' => { 'stroke-width' => $std_line_width },
+                                             'show_arrows'  => 1
+                                            }
+                                           );
+
+   # top edge diag. clues
+   my $clue_A = $entries[1] * $entries[7] * $entries[13];
+   my $clue_B = $entries[2] * $entries[8] * $entries[14];
+
+   # top edge column clues:
+   my $clue_C = $entries[2] * $entries[7] * $entries[12];
+   my $clue_D = $entries[3] * $entries[8] * $entries[13];
+   my $clue_E = $entries[4] * $entries[9] * $entries[14];
+
+   # upper right corner diagonal clue:
+   my $clue_UR = $entries[4] * $entries[8] * $entries[12];
+
+   # right edge diag. clues:
+   my $clue_F = $entries[9] * $entries[13] * $entries[17];
+   my $clue_G = $entries[14] * $entries[18] * $entries[22];
+
+   # right edge row clues
+   my $clue_H = $entries[12] * $entries[13] * $entries[14];
+   my $clue_I = $entries[17] * $entries[18] * $entries[19];
+   my $clue_J = $entries[22] * $entries[23] * $entries[24];
+
+   # lower right corner diagonal clue:
+   my $clue_LR = $entries[12] * $entries[18] * $entries[24];
+
+   # lower edge diag. clues:
+   my $clue_K = $entries[11] * $entries[17] * $entries[23];
+   my $clue_L = $entries[10] * $entries[16] * $entries[22];
+
+   # lower edge column clues:
+   my $clue_M = $entries[12] * $entries[17] * $entries[22];
+   my $clue_N = $entries[11] * $entries[16] * $entries[21];
+   my $clue_O = $entries[10] * $entries[15] * $entries[20];
+
+   # lower left corner diagonal clue:
+   my $clue_LL = $entries[12] * $entries[16] * $entries[20];
+
+   # left edge diag. clues:
+   my $clue_P = $entries[7] * $entries[11] * $entries[15];
+   my $clue_Q = $entries[2] * $entries[6] * $entries[10];
+
+   # left edge row clues:
+   my $clue_R = $entries[10] * $entries[11] * $entries[12];
+   my $clue_S = $entries[5] * $entries[6] * $entries[7];
+   my $clue_T = $entries[0] * $entries[1] * $entries[2];
+
+   # upper left corner diagonal clue:
+   my $clue_UL = $entries[0] * $entries[6] * $entries[12];
+
+
+   my $dist_from_box = -0.6;
+   $LLobj->add_clue_text( $clue_A, "0.5,5.4" );
+   $LLobj->add_clue_text( $clue_B, "1.5,5.4" );
+   $LLobj->add_clue_text( $clue_C, "2.5,5.4" );
+   $LLobj->add_clue_text( $clue_D, "3.5,5.4" );
+   $LLobj->add_clue_text( $clue_E, "4.5,5.4" );
+
+   $LLobj->add_clue_text( $clue_UR, "5.5,5.4" );
+
+   $LLobj->add_clue_text( $clue_F, "5.6,4.4" );
+   $LLobj->add_clue_text( $clue_G, "5.6,3.4" );
+   $LLobj->add_clue_text( $clue_H, "5.6,2.4" );
+   $LLobj->add_clue_text( $clue_I, "5.6,1.4" );
+   $LLobj->add_clue_text( $clue_J, "5.6,0.4" );
+
+   $LLobj->add_clue_text( $clue_LR, "5.5,-0.6" );
+
+   $LLobj->add_clue_text( $clue_K, "4.5,-0.6" );
+   $LLobj->add_clue_text( $clue_L, "3.5,-0.6" );
+   $LLobj->add_clue_text( $clue_M, "2.5,-0.6" );
+   $LLobj->add_clue_text( $clue_N, "1.5,-0.6" );
+   $LLobj->add_clue_text( $clue_O, "0.5,-0.6" );
+
+   $LLobj->add_clue_text( $clue_LL, "-0.5,-0.6" );
+
+   $LLobj->add_clue_text( $clue_P, "-0.6,0.4" );
+   $LLobj->add_clue_text( $clue_Q, "-0.6,1.4" );
+   $LLobj->add_clue_text( $clue_R, "-0.6,2.4" );
+   $LLobj->add_clue_text( $clue_S, "-0.6,3.4" );
+   $LLobj->add_clue_text( $clue_T, "-0.6,4.4" );
+
+   $LLobj->add_clue_text( $clue_UL, "-0.5,5.4" );
+
+   # add clue arrows
+   # SE
+   $LLobj->add_arrow('0.5,5.5,1.0,5');
+   $LLobj->add_arrow('1.5,5.5,2.0,5');
+
+   # down
+   $LLobj->add_arrow('2.5,5.5,2.5,5');
+   $LLobj->add_arrow('3.5,5.5,3.5,5');
+   $LLobj->add_arrow('4.5,5.5,4.5,5');
+
+   # SW
+   $LLobj->add_arrow('5.5,4.5,5.0,4.0');
+   $LLobj->add_arrow('5.5,3.5,5.0,3.0');
+
+   # left
+   $LLobj->add_arrow('5.5,2.5,5.0,2.5');
+   $LLobj->add_arrow('5.5,1.5,5.0,1.5');
+   $LLobj->add_arrow('5.5,0.5,5.0,0.5');
+
+   # NW
+   $LLobj->add_arrow('3.5,-0.5,3.0,0');
+   $LLobj->add_arrow('4.5,-0.5,4.0,0');
+
+   # up
+   $LLobj->add_arrow('0.5,-0.5,0.5,0');
+   $LLobj->add_arrow('1.5,-0.5,1.5,0');
+   $LLobj->add_arrow('2.5,-0.5,2.5,0');
+
+   # right
+   $LLobj->add_arrow('-0.5,4.5,0,4.5');
+   $LLobj->add_arrow('-0.5,3.5,0,3.5');
+   $LLobj->add_arrow('-0.5,2.5,0,2.5');
+
+   # NE
+   $LLobj->add_arrow('-0.5,1.5,0,2.0');
+   $LLobj->add_arrow('-0.5,0.5,0,1.0');
+
+   # corner arrows:
+   $LLobj->add_arrow('-0.5,5.5,0,5.0');
+   $LLobj->add_arrow('5.5,5.5,5,5');
+   $LLobj->add_arrow('5.5,-0.5,5,0');
+   $LLobj->add_arrow('-0.5,-0.5,0,0');
+
+
+   $LLobj->add_answer_text( $entries[0], "0.5,4.4" );
+   $LLobj->add_answer_text( $entries[1], "1.5,4.4" );
+   $LLobj->add_answer_text( $entries[2], "2.5,4.4" );
+   $LLobj->add_answer_text( $entries[3], "3.5,4.4" );
+   $LLobj->add_answer_text( $entries[4], "4.5,4.4" );
+
+   $LLobj->add_answer_text( $entries[5], "0.5,3.4" );
+   $LLobj->add_answer_text( $entries[6], "1.5,3.4" );
+   $LLobj->add_answer_text( $entries[7], "2.5,3.4" );
+   $LLobj->add_answer_text( $entries[8], "3.5,3.4" );
+   $LLobj->add_answer_text( $entries[9], "4.5,3.4" );
+
+   $LLobj->add_answer_text( $entries[10], "0.5,2.4" );
+   $LLobj->add_answer_text( $entries[11], "1.5,2.4" );
+   $LLobj->add_answer_text( $entries[12], "2.5,2.4" );
+   $LLobj->add_answer_text( $entries[13], "3.5,2.4" );
+   $LLobj->add_answer_text( $entries[14], "4.5,2.4" );
+
+   $LLobj->add_answer_text( $entries[15], "0.5,1.4" );
+   $LLobj->add_answer_text( $entries[16], "1.5,1.4" );
+   $LLobj->add_answer_text( $entries[17], "2.5,1.4" );
+   $LLobj->add_answer_text( $entries[18], "3.5,1.4" );
+   $LLobj->add_answer_text( $entries[19], "4.5,1.4" );
+
+
+   $LLobj->add_answer_text( $entries[20], "0.5,0.4" );
+   $LLobj->add_answer_text( $entries[21], "1.5,0.4" );
+   $LLobj->add_answer_text( $entries[22], "2.5,0.4" );
+   $LLobj->add_answer_text( $entries[23], "3.5,0.4" );
+   $LLobj->add_answer_text( $entries[24], "4.5,0.4" );
+
+
+   # add the lines for a 9-number square puzzle
+   # to the LatticeLines object:
+
+   $LLobj->add_line('1,-1,1,6'); # verticals
+   $LLobj->add_line('0,-1,0,6');
+   $LLobj->add_line('2,-1,2,6');
+   $LLobj->add_line('3,-1,3,6');
+   $LLobj->add_line('4,-1,4,6');
+   $LLobj->add_line('5,-1,5,6');
+
+   $LLobj->add_line('-1,0,6,0'); # horizontals
+   $LLobj->add_line('-1,1,6,1');
+   $LLobj->add_line('-1,2,6,2');
+   $LLobj->add_line('-1,3,6,3');
+   $LLobj->add_line('-1,4,6,4');
+   $LLobj->add_line('-1,5,6,5');
+
+   # these are the heavy lines outlining the area with the 9 numbers
+   $LLobj->add_line( '0,0,0,5', { 'stroke-width' => $thick_line_width } );
+   $LLobj->add_line( '5,0,5,5', { 'stroke-width' => $thick_line_width } );
+
+   $LLobj->add_line( '0,0,5,0', { 'stroke-width' => $thick_line_width } );
+   $LLobj->add_line( '0,5,5,5', { 'stroke-width' => $thick_line_width } );
+
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the first 3 numbers', '  in line with the arrow.']
+                         );
+
+   return $LLobj;
+}
+
+
 
 
 
@@ -1454,9 +1872,11 @@ sub square5x5nn_puzzle {
    #    my $scale          = shift || 100;
    #  my $offset_x       = shift || 0.5;
    #  my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,2,3,5,7,11,2,3,5,7,13,2,3';
+   my $numbers_string = shift // '1,2,3,5,7,11,2,3,5,7,13,2,3';
+   my $n_depth = shift // 1;
    my $target_size = 13;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
    my $std_line_width   = 0.02; # * $scale / 100;
    my $thick_line_width = 0.06; # * $scale / 100;
@@ -1559,17 +1979,17 @@ sub square5x5nn_puzzle {
    $LLobj->add_line( '3,1,3,2', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '1,2,2,2', { 'stroke-width' => $thick_line_width } );
 
-  my $A = 0.25;
+   my $A = 0.25;
    $LLobj->{min_x} -= $A;
    $LLobj->{max_x} += $A;
    $LLobj->{min_y} -= $A;
    $LLobj->{max_y} += $A;
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in the 3 neighboring squares - ',
-                          '  squares separated by a heavy black line do not count as neighbors!']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the 3 neighboring squares - ',
+                           '  squares separated by a heavy black line do not count as neighbors!']
+                         );
 
    return $LLobj;
 }
@@ -1580,11 +2000,13 @@ sub square6x6_puzzle {
    #    my $scale          = shift || 100;
    #  my $offset_x       = shift || 0.5;
    #  my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,2,3,5,7';
+   my $numbers_string = shift // '1,1,2,3,5,7';
+   my $n_depth = shift // 1;
    my $target_size = 28;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02;  # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.075; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -1859,11 +2281,13 @@ sub square3x3_puzzle {
    #    my $scale          = shift || 100;
    #  my $offset_x       = shift || 0.5;
    #  my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,2,3,5,7';
+   my $numbers_string = shift // '1,1,2,3,5,7';
+   my $n_depth = shift // 1;
    my $target_size = 9;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 2;
    my $LLobj            = LatticeLines->new(
@@ -1872,7 +2296,7 @@ sub square3x3_puzzle {
 
                                              #      'offset' => [ $offset_x * $scale, $offset_y * $scale ],
                                              # 'margin' => [1*$scale, 1*$scale],
-                                             'font-size'    => 0.4, # int( $scale / 3.3 ),
+                                             'font-size'    => 0.3, # int( $scale / 3.3 ),
 
                                              'text-anchor'  => 'middle',
                                              'line_options' => { 'stroke-width' => $std_line_width },
@@ -1950,11 +2374,11 @@ sub square3x3_puzzle {
    $LLobj->add_arrow('-0.5,2.5,0,2.5');
    $LLobj->add_arrow('-0.5,3.5,0,3');
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the 3 numbers in the ',
-                          '  row, column or diagonal pointed to by the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the 3 numbers in the ',
+                           '  row, column or diagonal pointed to by the arrow.']
+                         );
 
    return $LLobj;
 }
@@ -1964,12 +2388,14 @@ sub triangle9_puzzle {
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,1,2,2,2,3,5,7';
+   my $numbers_string = shift // '1,1,1,2,2,2,3,5,7';
+   my $n_depth = shift // 1;
    my $target_size = 9;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
    my $size    = scalar @entries;
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.06; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
@@ -2037,26 +2463,28 @@ sub triangle9_puzzle {
    $LLobj->add_line( '0,1,3,1', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '0,4,3,1', { 'stroke-width' => $thick_line_width } );
 
-$LLobj->set_directions(
-                         ['* Fill in each empty triangle with 1 or a prime number.',
-                          '* Each clue gives the product of the numbers in line with the clue.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty triangle with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in line with the clue.']
+                         );
 
    return $LLobj;
 }
 
 
-sub triangle13_3_puzzle {         # 13 triangles
+sub triangle13_3_puzzle {       # 13 triangles
 
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,2,2,3,3,5,5,7,11,2,3,5';
+   my $numbers_string = shift // '1,1,2,2,3,3,5,5,7,11,2,3,5';
+   my $n_depth = shift // 1;
    my $target_size = 13;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
    my $size    = scalar @entries;
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.05; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
@@ -2108,7 +2536,7 @@ sub triangle13_3_puzzle {         # 13 triangles
    # $LLobj->add_clue_text( $clue_K, '-0.5,3.9' );
    # $LLobj->add_clue_text( $clue_L, '-0.3,4.7' );
 
-  $LLobj->add_clue_text( $clue_A, '0.6,4.6' );
+   $LLobj->add_clue_text( $clue_A, '0.6,4.6' );
    $LLobj->add_clue_text( $clue_B, '1.6,3.85' );
    $LLobj->add_clue_text( $clue_C, '3.15,2.4' );
    $LLobj->add_clue_text( $clue_D, '3.9,1.4' );
@@ -2191,9 +2619,10 @@ sub triangle13_3_puzzle {         # 13 triangles
    $LLobj->add_line( '1,1,0,2', { 'stroke-width' => $thick_line_width } );
 
    $LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the first 3 numbers in line with the arrow.']
-                        );
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the first 3 numbers in ', 
+                           '  line with the arrow.']
+                         );
 
    my $A = 0.6;
    $LLobj->{min_x} -= $A;
@@ -2204,18 +2633,19 @@ sub triangle13_3_puzzle {         # 13 triangles
    return $LLobj;
 }
 
-sub triangle13_4_puzzle {        # 13 triangles
+sub triangle13_4_puzzle {       # 13 triangles
 
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || 
-      '1,1,2,2,3,3,5,5,7,11,2,3,5';
+   my $numbers_string = shift // '1,1,2,2,3,3,5,5,7,11,2,3,5';
+   my $n_depth = shift // 1;
    my $target_size = 13;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
    my $size    = scalar @entries;
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; #0.05; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
@@ -2335,10 +2765,11 @@ sub triangle13_4_puzzle {        # 13 triangles
    $LLobj->add_line( '3,1,1,1', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '1,1,0,2', { 'stroke-width' => $thick_line_width } );
 
-$LLobj->set_directions(
-                         ['* Fill in each empty square with 1 or a prime number.',
-                          '* Each clue gives the product of the first 4 numbers in line with the arrow.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty square with 1 or a prime number.',
+                           '* Each clue gives the product of the first 4 numbers',
+                           '  in line with the arrow.']
+                         );
 
    my $A = 0.6;
    $LLobj->{min_x} -= $A;
@@ -2355,12 +2786,14 @@ sub triangle16_puzzle {
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,1,1,2,2,2,3,3,5,5,7,11,3,5,7,11';
+   my $numbers_string = shift // '1,1,1,2,2,2,3,3,5,5,7,11,3,5,7,11';
+   my $n_depth = shift // 1;
    my $target_size = 16;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
    my $size    = scalar @entries;
 
-   my $std_line_width   = 0.02; # * $scale / 100;
+   my $std_line_width   = 0.02;       # * $scale / 100;
    my $thick_line_width = THICKWIDTH; # 0.06; # * $scale / 100;
    my $angle            = pi / 3;
    my $LLobj            = LatticeLines->new(
@@ -2461,10 +2894,11 @@ sub triangle16_puzzle {
    $LLobj->add_line( '0,1,4,1', { 'stroke-width' => $thick_line_width } );
    $LLobj->add_line( '0,5,4,1', { 'stroke-width' => $thick_line_width } );
 
-$LLobj->set_directions(
-                         ['* Fill in each empty triangle with 1 or a prime number.',
-                          '* Each clue gives the product of the first 3 numbers in line with the clue.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty triangle with 1 or a prime number.',
+                           '* Each clue gives the product of the first 3 numbers ', 
+                           '  in line with the clue.']
+                         );
 
    return $LLobj;
 }
@@ -2472,9 +2906,11 @@ $LLobj->set_directions(
 
 sub triangle6_puzzle {       # there are 6 unknown numbers to be found
 
-   my $numbers_string = shift || '1,2,2,3,5,7';
+   my $numbers_string = shift // '1,2,2,3,5,7';
+   my $n_depth = shift // 1;
    my $target_size = 6;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
    my $size    = scalar @entries;
 
    my $std_line_width   = 0.02; # * $scale / 100;
@@ -2539,16 +2975,17 @@ sub triangle6_puzzle {       # there are 6 unknown numbers to be found
 
    $LLobj->add_circle('1,2', sqrt(3)*$scale);
 
-  my $A = 0.4;
+   my $A = 0.4;
    $LLobj->{min_x} -= $A;
    $LLobj->{max_x} += $A;
    $LLobj->{min_y} -= $A;
    $LLobj->{max_y} += $A;
 
-$LLobj->set_directions(
-                         ['* Fill in each empty triangle with 1 or a prime number.',
-                          '* Each clue gives the product of the 3 numbers in the neighboring triangles.']
-                        );
+   $LLobj->set_directions(
+                          ['* Fill in each empty triangle with 1 or a prime number.',
+                           '* Each clue gives the product of the 3 numbers in ', 
+                           '  the neighboring triangles.']
+                         );
 
    return $LLobj;
 }
@@ -2560,9 +2997,11 @@ sub triangle10_puzzle {         # 10 unknown numbers to be found.
    #   my $scale          = shift || 100;
    #   my $offset_x       = shift || 0.5;
    #   my $offset_y       = shift || 0.5;
-   my $numbers_string = shift || '1,2,3,5,7,11';
+   my $numbers_string = shift // '1,2,3,5,7,11';
+   my $n_depth = shift // 1;
    my $target_size = 10;
-   my @entries = @{ randomize_numbers( $numbers_string, $target_size ) };
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
    my $size    = scalar @entries;
 
    my $std_line_width   = 0.02; # * $scale / 100;
@@ -2647,20 +3086,129 @@ sub triangle10_puzzle {         # 10 unknown numbers to be found.
    $LLobj->{max_y} += $A;
 
    $LLobj->set_directions(
-                         ['* Fill in each empty triangle with 1 or a prime number.',
-                          '* Each clue gives the product of the 3 numbers in the neighboring triangles,',
-                          '  or of the 4 neighboring triangles for the clues outside the big triangle.']
-                        );
+                          ['* Fill in each empty triangle with 1 or a prime number.',
+                           '* Each clue gives the product of the 3 numbers in the neighboring triangles,',
+                           '  or of the 4 neighboring triangles for the clues outside the big triangle.']
+                         );
 
    return $LLobj;
 }
 
-sub randomize_numbers {        # take the argument (string of numbers)
 
+sub bunch_of_12grapes_puzzle { # there are 6 unknown numbers to be found
+
+   my $numbers_string = shift // '1,2,2,3,5,7';
+   my $n_depth = shift // 1;
+   my $target_size = 12;
+   my @entries =  @{ get_entries($target_size, $numbers_string, $n_depth)};
+   # @{ randomize_numbers( $numbers_string, $target_size ) };
+   my $size    = scalar @entries;
+
+   my $std_line_width   = 0.02; # * $scale / 100;
+   my $thick_line_width = 0.04; # * $scale / 100;
+   my $angle            = pi / 3;
+   my $scale = 1;               # 0.6; # (3**0.5)/2;
+   my $LLobj            = LatticeLines->new(
+                                            {
+                                             'basis' => [ [ $scale, 0 ], [ $scale * cos($angle), -1 * $scale * sin($angle) ] ],
+
+                                             #        'offset' => [ $offset_x * $scale, $offset_y * $scale ],
+                                             #	 'margin' => [0.5*$scale, 0.5*$scale],
+                                             'font-size'    => 0.2,
+                                             'text-anchor'  => 'middle',
+                                             'line_options' => { 'stroke-width' => $std_line_width },
+                                             'show_arrows'  => 1
+                                            }
+                                           );
+
+   my $e2 = 0.075;
+   my $e1 = -0.5 * $e2;
+   my $vb = "$e1,$e2";
+
+   my $clue_A = $entries[3] * $entries[4] * $entries[5] * $entries[6];
+   my $clue_B = $entries[0] * $entries[1] * $entries[2];
+
+   my $clue_C = $entries[2] * $entries[5] * $entries[8] * $entries[10];
+   my $clue_D = $entries[6] * $entries[9] * $entries[11];
+
+   my $clue_E = $entries[11] * $entries[8] * $entries[4] * $entries[0];
+   my $clue_F = $entries[10] * $entries[7] * $entries[3];
+
+   $LLobj->add_clue_text( $clue_A, '-1.0,1.0' );
+   $LLobj->add_clue_text( $clue_B, '0.0,0.0' );
+
+   $LLobj->add_clue_text( $clue_C, '4.0,-1.0' );
+   $LLobj->add_clue_text( $clue_D, '4.0,0.0' );
+
+   $LLobj->add_clue_text( $clue_E, '1.0,4.0' );
+   $LLobj->add_clue_text( $clue_F, '0.0,4.0' );
+
+
+   $LLobj->add_arrow([vsum('-1.0,1.0', $vb), vsum('-0.5,1', $vb)]);
+$LLobj->add_arrow([vsum('-0.0,0.0', $vb), vsum('0.5,0', $vb)]);
+
+$LLobj->add_arrow([vsum('4.0,-1.0', $vb), vsum('3.5,-0.5', $vb)]);
+$LLobj->add_arrow([vsum('4.0,0.0', $vb), vsum('3.5,0.5', $vb)]);
+
+$LLobj->add_arrow([vsum('0.0,4.0', $vb), vsum('0.0,3.5', $vb)]);
+$LLobj->add_arrow([vsum('1.0,4.0', $vb), vsum('1.0,3.5', $vb)]);
+
+
+   $LLobj->add_answer_text( $entries[0], '1,0' );
+   $LLobj->add_answer_text( $entries[1], '2,0' );
+   $LLobj->add_answer_text( $entries[2], '3,0' );
+
+   $LLobj->add_answer_text( $entries[3], '0,1' );
+   $LLobj->add_answer_text( $entries[4], '1,1' );
+   $LLobj->add_answer_text( $entries[5], '2,1' );
+   $LLobj->add_answer_text( $entries[6], '3,1' );
+
+   $LLobj->add_answer_text( $entries[7], '0,2' );
+   $LLobj->add_answer_text( $entries[8], '1,2' );
+   $LLobj->add_answer_text( $entries[9], '2,2' );
+
+   $LLobj->add_answer_text( $entries[10], '0,3' );
+   $LLobj->add_answer_text( $entries[11], '1,3' );
+
+   my $r = 0.5;
+
+
+   $LLobj->add_circle(vsum('1,0', $vb), $r);
+   $LLobj->add_circle(vsum('2,0', $vb), $r);
+   $LLobj->add_circle(vsum('3,0', $vb), $r);
+
+   $LLobj->add_circle(vsum('0,1', $vb), $r);
+   $LLobj->add_circle(vsum('1,1', $vb), $r);
+   $LLobj->add_circle(vsum('2,1', $vb), $r);
+   $LLobj->add_circle(vsum('3,1', $vb), $r);
+
+   $LLobj->add_circle(vsum('0,2', $vb), $r);
+   $LLobj->add_circle(vsum('1,2', $vb), $r);
+   $LLobj->add_circle(vsum('2,2', $vb), $r);
+
+   $LLobj->add_circle(vsum('0,3', $vb), $r);
+   $LLobj->add_circle(vsum('1,3', $vb), $r);
+
+   my $A = 0.4;
+   $LLobj->{min_x} -= $A;
+   $LLobj->{max_x} += $A;
+   $LLobj->{min_y} -= $A;
+   $LLobj->{max_y} += $A;
+
+   $LLobj->set_directions(
+                          ['* Fill in each empty circle with 1 or a prime number.',
+                           '* Each clue gives the product of the numbers in the', 
+                           '  row of circles which the arrow points to.']
+                         );
+
+   return $LLobj;
+}
+
+sub randomize_numbers { # take the argument (string of comma-separated numbers)
    # and get an array of numbers in randomized order
-   my $numbers_string = shift || '1,2,3,5,7,11';
+   my $nmbrs = shift // [1,2,3,5,7,11]; #  '1,2,3,5,7,11';
    my $target_size    = shift;
-   my @numbers        = split( '\s*,\s*', $numbers_string ); # split on commas (optionally with whitespace before and/or after).
+   my @numbers = @$nmbrs; #        = split( '\s*,\s*', $numbers_string ); # split on commas (optionally with whitespace before and/or after).
    my $size           = scalar @numbers;
    my @entries        = ();
    foreach ( 0 .. $target_size - 1 ) {
@@ -2680,4 +3228,16 @@ sub randomize_numbers {        # take the argument (string of numbers)
    }
 
    return \@entries;
+}
+
+
+sub vsum{ # return sum of two vectors represented as comma-separated string
+my $va = shift; # e.g. '1,3'
+my $vb = shift; # e.g. '-1,3.3'
+
+#print STDERR "va: $va, vb: $vb \n";
+my ($a1, $a2) = split(",", $va);
+my ($b1, $b2) = split(",", $vb);
+#print STDERR "$a1 $a2 $b1 $b2 \n";
+return ($a1 + $b1) . "," . ($a2 + $b2);
 }
