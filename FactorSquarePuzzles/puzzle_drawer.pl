@@ -26,6 +26,7 @@ my $show_clues      = 1;
 my $show_answers    = 0;
 my $show_arrows     = 1;
 my $n_depth = 1;
+my $print_solutions = 0;
 
 my $factor_string = undef;
 
@@ -62,6 +63,7 @@ GetOptions(
            'output_filename=s' => \$output_filename,
            'factors|factor_string=s' => \$factor_string, # 
            'depth=i' => \$n_depth,
+           'solutions!' => \$print_solutions,
           );
 
 
@@ -124,19 +126,26 @@ for my $i_page ( 1 .. $n_pages ) {
 }
 if ( defined $output_filename ) {
    my $solutions_filename = $output_filename . '_solutions.svg';
+#   my $pdf_output_filename = $output_filename . ".pdf";
    $output_filename .= '.svg';
    open my $fhout, ">", "$output_filename";
    print $fhout $svg_string;
    close $fhout;
- 
+
+   system " svgs2pdfs.pl $output_filename ";
+
+   if($print_solutions){
    open $fhout, ">", "$solutions_filename";
    print $fhout $svg_solutions_string;
    close $fhout;
+}
 } else {
    print $svg_string;
+   if($print_solutions){
    open my $fhout, ">", "solutions.svg";
    print $fhout $svg_solutions_string;
    close $fhout;
+}
 }
 
 # end of main.
@@ -155,7 +164,7 @@ sub multi_puzzles {
    $printing_area_width  -= 2 * $margin;
    my $puzzle_area_width = $printing_area_width;
    $printing_area_height -= 2 * $margin;
-   my $writing_area_height = 0.16*$printing_area_height;
+   my $writing_area_height = 0.18*$printing_area_height;
    my $puzzle_area_height = $printing_area_height - $writing_area_height;
 
    #   my $sum_of_gaps = 0.5*min($printing_area_width, $printing_area_height);
@@ -251,7 +260,7 @@ sub multi_puzzles {
                $svg_string .= $directions_svg_text_string;
                $y_directions += $line_y_spacing;
             }
-            $svg_string .=  '<text x="' . 100 . '" y="' . ($margin + $writing_area_height + 0.5*$line_y_spacing) . '" '
+            $svg_string .=  '<text x="' . 100 . '" y="' . ($margin + $writing_area_height + 0.0*$line_y_spacing) . '" '
               . ' font-size="' . $font_size . '" style="text-anchor:start'  . '" > '
                 . 'Example: '
                   . "</text>\n";
@@ -1987,8 +1996,9 @@ sub square5x5nn_puzzle {
 
    $LLobj->set_directions(
                           ['* Fill in each empty square with 1 or a prime number.',
-                           '* Each clue gives the product of the numbers in the 3 neighboring squares - ',
-                           '  squares separated by a heavy black line do not count as neighbors!']
+                           '* Each clue gives the product of the numbers in',
+                           'the 3 neighboring squares. Squares separated by',
+                           'a heavy black line do not count as neighbors!']
                          );
 
    return $LLobj;
@@ -2273,6 +2283,13 @@ sub square6x6_puzzle {
    $LLobj->add_arrow( [ 0.5, 2.5, 0.5, 3 ] );
    $LLobj->add_arrow( [ 1.5, 3.5, 2,   3.5 ] );
 
+   # $LLobj->set_directions(
+   #                        ['* Fill in each empty square with 1 or a prime number.',
+   #                         '* Each clue gives the product of the numbers in',
+   #                         'the . Squares separated by',
+   #                         'a heavy black line do not count as neighbors!']
+   #                       );
+
    return $LLobj;
 }
 
@@ -2465,7 +2482,8 @@ sub triangle9_puzzle {
 
    $LLobj->set_directions(
                           ['* Fill in each empty triangle with 1 or a prime number.',
-                           '* Each clue gives the product of the numbers in line with the clue.']
+                           '* Each clue gives the product of the numbers',
+                           'in line with the clue.']
                          );
 
    return $LLobj;
