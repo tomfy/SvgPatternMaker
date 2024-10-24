@@ -26,7 +26,7 @@ print $output, "\n end of page number $page_number. \n\n\n";
 }else{
 my $pdf_page_output = filter $page_svg, 'cairosvg -f pdf - ';  # , '--with', 'various=args', '--etc';
 #my $tmp_svg_page_file = "tmp_page_" . $page_number
-open my $fh, ">$tmp_pdf_page_file";
+open my $fh, ">", "$tmp_pdf_page_file";
 print $fh $pdf_page_output;
 
 $pdf_files_to_combine .= " $tmp_pdf_page_file ";

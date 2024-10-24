@@ -3,7 +3,20 @@ use strict;
 use List::Util qw ' min max sum ';
 use Math::Trig;
 
-use lib '/home/tomfy/Non-Work/SvgPatternMaker/FactorSquarePuzzles';
+use File::Basename 'dirname';
+use Cwd 'abs_path';
+my ( $bindir, $libdir );
+BEGIN {     # this has to go in Begin block so happens at compile time
+  $bindir =
+    dirname( abs_path(__FILE__) ) ; # the directory containing this script
+  $libdir = $bindir . '/../lib';
+  $libdir = abs_path($libdir);	# collapses the bin/../lib to just lib
+}
+use lib $bindir;
+# print STDERR "libdir: $libdir \n";
+# use lib $libdir;
+
+#use lib '/home/tomfy/Non-Work/SvgPatternMaker/FactorSquarePuzzles';
 use LatticeLines;
 use Getopt::Long;
 
